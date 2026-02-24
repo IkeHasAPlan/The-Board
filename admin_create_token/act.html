@@ -3,9 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>Admin Create Token</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .radio-group {
+            margin-top: 4px;
+        }
+        .radio-group label {
+            display: inline;
+            font-weight: normal;
+            margin-right: 16px;
+        }
+    </style>
 </head>
 <body>
-   <h1><p>test</p></h1>
+    <div id="root"></div>
+    <script type="text/babel">
+        function App() {
+            const [form, setForm] = React.useState({
+                firstName: '',
+                lastName: '',
+                workOrder: '',
+                deviceDescription: '',
+                jobDescription: '',
+                deviceType: ''
+            });
+
+            function handleChange(e) {
+                setForm({ ...form, [e.target.name]: e.target.value });
+            }
+
+            return (
+                <div className="container">
+                    <h1>Enter the following information...</h1>
+
+                    <label>First Name</label>
+                    <input type="text" name="firstName" value={form.firstName} onChange={handleChange} />
+
+                    <label>Last Name</label>
+                    <input type="text" name="lastName" value={form.lastName} onChange={handleChange} />
+
+                    <label>Work Order Number</label>
+                    <input type="text" name="workOrder" value={form.workOrder} onChange={handleChange} />
+
+                    <label>Device Description</label>
+                    <input type="text" name="deviceDescription" value={form.deviceDescription} onChange={handleChange} />
+
+                    <label>Brief Description of Job</label>
+                    <textarea name="jobDescription" value={form.jobDescription} onChange={handleChange} />
+
+                    <label>Device Type</label>
+                    <div className="radio-group">
+                        <label>
+                            <input type="radio" name="deviceType" value="Laptop" checked={form.deviceType === 'Laptop'} onChange={handleChange} /> Laptop
+                        </label>
+                        <label>
+                            <input type="radio" name="deviceType" value="Desktop" checked={form.deviceType === 'Desktop'} onChange={handleChange} /> Desktop
+                        </label>
+                        <label>
+                            <input type="radio" name="deviceType" value="Other" checked={form.deviceType === 'Other'} onChange={handleChange} /> Other
+                        </label>
+                    </div>
+
+                    <button type="button" style={{marginTop: '20px', padding: '10px 24px', cursor: 'pointer'}}>Submit</button>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
 </body>
 </html>
