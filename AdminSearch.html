@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Board UI</title>
+    <style>
+      :root {
+        --outer: 4px solid #000;
+        --inner: 2px solid #000;
+        --selected: #1687d9;
+        --font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: #fff;
+        color: #000;
+      }
+
+      .app {
+        height: 100vh;
+        display: flex;
+        gap: 24px;
+        padding: 18px;
+      }
+
+      .sidebar {
+        width: 320px;
+        flex: 0 0 320px;
+        border: var(--outer);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        min-width: 320px;
+      }
+
+      .search-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .search-input {
+        flex: 1;
+        height: 38px;
+        border: var(--inner);
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 14px;
+        outline: none;
+      }
+
+      .icon {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+      }
+
+      .ticket-list {
+        margin-top: 12px;
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-right: 6px;
+      }
+
+      .ticket {
+        border: var(--inner);
+        padding: 10px 10px 12px;
+        min-height: 86px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 12px;
+        align-items: start;
+        background: #fff;
+      }
+
+      .ticket .name {
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .ticket .type {
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .ticket .issue {
+        grid-column: 1 / -1;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .ticket.selected {
+        border: 4px solid var(--selected);
+        padding: 8px 8px 10px;
+      }
+
+      .detail {
+        flex: 1;
+        border: var(--outer);
+        padding: 18px 22px;
+        overflow: auto;
+      }
+
+      .detail h1 {
+        margin: 0 0 18px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 900;
+        text-decoration: underline;
+      }
+
+      .line {
+        margin: 18px 0;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 520px) {
+        .app { flex-direction: column; }
+        .sidebar { width: 100%; min-width: 0; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="search-row">
+          <input class="search-input" type="text" placeholder="Search..." />
+          <div class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="#000" stroke-width="2"></circle>
+              <path d="M20 20L17 17" stroke="#000" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div class="ticket-list">
+          <div class="ticket">
+            <div class="name">Mun Choi #45607</div>
+            <div class="type">Desktop</div>
+            <div class="issue">Custom Gaming PC</div>
+          </div>
+
+          <div class="ticket selected">
+            <div class="name">Fang Wang #45601</div>
+            <div class="type">Desktop</div>
+            <div class="issue">Mobo Failure</div>
+          </div>
+
+          <div class="ticket">
+            <div class="name">Dale Musser #45604</div>
+            <div class="type">Laptop</div>
+            <div class="issue">Data Transfer</div>
+          </div>
+
+          <div class="ticket">
+            <div class="name">Spot the Dog #45610</div>
+            <div class="type">Laptop</div>
+            <div class="issue">Tune-Up</div>
+          </div>
+
+          <div class="ticket">
+            <div class="name">Mark Twain #45612</div>
+            <div class="type">Desktop</div>
+            <div class="issue">No Power</div>
+          </div>
+
+          <div class="ticket">
+            <div class="name">Kris Culmer #45615</div>
+            <div class="type">Laptop</div>
+            <div class="issue">Screen Replacement</div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="detail">
+        <h1>Fang Wang #45601</h1>
+        <div class="line">Device Description: Black IBuyPower Prebuilt</div>
+        <div class="line">Assigned Technician: Isaac Rivera</div>
+        <div class="line">Status: In Progress. Waiting for customer response. Started 2:58pm, 2-12-2026.</div>
+      </main>
+    </div>
+  </body>
+</html>
