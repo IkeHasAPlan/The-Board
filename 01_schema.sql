@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 		ON DELETE SET NULL
 );
 
--- Constraints - workflow and priority
+-- Constraints - workflow / priority
 ALTER TABLE tickets DROP CONSTRAINT IF EXISTS priority_check; 
 ALTER TABLE tickets DROP CONSTRAINT IF EXISTS status_check; 
 
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS ticket_events (
 		ON DELETE SET NULL 
 );
 
--- Indexes - common board/admin queries
+-- Indexes - common board / admin queries
 CREATE INDEX IF NOT EXISTS idx_ticket_status ON tickets(current_status); 
 CREATE INDEX IF NOT EXISTS idx_ticket_technician ON tickets(assigned_technician_id); 
 CREATE INDEX IF NOT EXISTS idx_ticket_created ON tickets(created_at); 
@@ -80,4 +80,5 @@ CREATE INDEX IF NOT EXISTS idx_ticket_completed_at ON tickets(completed_at);
 
 CREATE INDEX IF NOT EXISTS idx_events_ticket ON ticket_events(ticket_id); 
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp);
+
 
