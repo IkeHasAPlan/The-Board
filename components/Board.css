@@ -1,0 +1,47 @@
+.board {
+  display: grid;
+  grid-template-columns: 15% repeat(var(--techCount), 1fr) 50%;
+  grid-template-rows: 0.1fr 0.35fr 0.275fr 0.275fr;
+  gap: 10px;
+  width: 100vw;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+/* Header styles */
+.header {
+  background-color: #f8f2d6;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+/* Resolved header */
+.headerNew {
+  background-color: #d0f0ff;
+}
+
+/* Cell styling */
+.cell {
+  border: 1px solid #ccc;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden; /* prevent scrolling anywhere */
+}
+
+/* Row label inside each cell */
+.rowLabel {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 0.85em;
+}
+
+/* Resolved column styling */
+.cellResolved {
+  background-color: #d0f0ff;
+  grid-column: calc(var(--techCount) + 2);
+  grid-row: 2 / span 3;
+}

@@ -1,0 +1,24 @@
+.ticketCard {
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #caff70;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Status coloring */
+.ticketCard.actively {
+  background: #b7f397;
+}
+
+.ticketCard.waitingParts {
+  background: #ffd27f;
+}
+
+.ticketCard.waitingCustomer {
+  background: #ffb3b3;
+}
+
+.ticketCard.resolved {
+  background: #dcdcdc;
+}
