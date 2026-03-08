@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	started_at TIMESTAMP,
 	completed_at TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 	CONSTRAINT fk_assigned_technician
 		FOREIGN KEY (assigned_technician_id) 
@@ -72,6 +73,12 @@ CREATE TABLE IF NOT EXISTS ticket_events (
 		ON DELETE SET NULL 
 );
 
+-- Enforce valid event types
+ALTER TABLE ticket_events DROP CONSTRAINT IF EXISTS event_type_check;
+ALTER TABLE ticket_events
+	ADD CONSTRAINT event_type_check
+	CHECK (event_type IN ('CREATED','STATUS_CHANGE','ASSIGNMENT_CHANGE','PRIORITY_CHANGE'));
+
 -- Indexes - common board / admin queries
 CREATE INDEX IF NOT EXISTS idx_ticket_status ON tickets(current_status); 
 CREATE INDEX IF NOT EXISTS idx_ticket_technician ON tickets(assigned_technician_id); 
@@ -80,14 +87,7 @@ CREATE INDEX IF NOT EXISTS idx_ticket_completed_at ON tickets(completed_at);
 
 CREATE INDEX IF NOT EXISTS idx_events_ticket ON ticket_events(ticket_id); 
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp);
-ALTER TABLE tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_events_ticket_time_desc
 ON ticket_events(ticket_id, event_timestamp DESC);
-ALTER TABLE ticket_events
-  ADD CONSTRAINT IF NOT EXISTS event_type_check
-  CHECK (event_type IN ('CREATED','STATUS_CHANGE','ASSIGNMENT_CHANGE','PRIORITY_CHANGE'));
-
-
-
 
 
