@@ -81,6 +81,9 @@ CREATE INDEX IF NOT EXISTS idx_ticket_completed_at ON tickets(completed_at);
 CREATE INDEX IF NOT EXISTS idx_events_ticket ON ticket_events(ticket_id); 
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp);
 ALTER TABLE tickets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+CREATE INDEX IF NOT EXISTS idx_events_ticket_time_desc
+ON ticket_events(ticket_id, event_timestamp DESC);
+
 
 
 
