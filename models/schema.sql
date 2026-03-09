@@ -1,6 +1,6 @@
 -- 
 -- The Board Schema
--- 01_schema.sql
+-- schema.sql
 --
 
 -- Technicians 
@@ -89,5 +89,6 @@ CREATE INDEX IF NOT EXISTS idx_events_ticket ON ticket_events(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp);
 CREATE INDEX IF NOT EXISTS idx_events_ticket_time_desc
 ON ticket_events(ticket_id, event_timestamp DESC);
+
 
 
