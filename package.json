@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/IkeHasAPlan/The-Board#readme",
   "dependencies": {
-    "node": "^22.22.1"
+    "express": "^5.2.1"
   }
 }
