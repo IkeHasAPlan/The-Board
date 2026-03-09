@@ -1,6 +1,6 @@
 --
 -- The Board Triggers
--- 02_triggers.sql
+-- triggers.sql
 --
 
 -- Automatically maintain tickets.updated_at
