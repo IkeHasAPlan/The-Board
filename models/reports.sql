@@ -1,6 +1,6 @@
 --
 -- The Board Reports
--- 04_reports.sql
+-- reports.sql
 --
 
 -- Backlog by status
