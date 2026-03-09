@@ -1,6 +1,6 @@
 --
 -- The Board Seed Data
--- 03_seed.sql
+-- seed.sql
 --
 
 -- Technicians
