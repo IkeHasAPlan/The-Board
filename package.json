@@ -1,22 +1,14 @@
 {
-  "name": "the-board",
-  "version": "1.0.0",
-  "description": "Repo for the construction of Team 2's capstone project.",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "nodemon app.js",
+    "api": "node server.js",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run api\" \"npm run client\""
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/IkeHasAPlan/The-Board.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/IkeHasAPlan/The-Board/issues"
-  },
-  "homepage": "https://github.com/IkeHasAPlan/The-Board#readme",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
