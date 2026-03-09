@@ -1,0 +1,22 @@
+{
+  "name": "the-board",
+  "version": "1.0.0",
+  "description": "Repo for the construction of Team 2's capstone project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IkeHasAPlan/The-Board.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IkeHasAPlan/The-Board/issues"
+  },
+  "homepage": "https://github.com/IkeHasAPlan/The-Board#readme",
+  "dependencies": {
+    "node": "^22.22.1"
+  }
+}
