@@ -64,6 +64,35 @@
                 setForm({ ...form, [e.target.name]: e.target.value });
             }
 
+            const [status, setStatus] = React.useState(null);
+
+            async function handleSubmit() {
+                setStatus(null);
+
+                if (!form.firstName || !form.lastName || !form.workOrder || !form.jobDescription || !form.deviceType) {
+                    setStatus({ ok: false, text: 'Please fill out all required fields.' });
+                    return;
+                }
+
+                try {
+                    const res = await fetch('http://localhost:3001/tickets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(form)
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        setStatus({ ok: true, text: 'Ticket submitted!' });
+                        setForm({ firstName: '', lastName: '', workOrder: '', deviceDescription: '', jobDescription: '', deviceType: '' });
+                    } else {
+                        setStatus({ ok: false, text: data.error || 'Something went wrong.' });
+                    }
+                } catch (err) {
+                    setStatus({ ok: false, text: 'Could not reach server.' });
+                }
+            }
+
             return (
                 <div className="container">
                     <h1>Enter the following information...</h1>
@@ -96,7 +125,8 @@
                         </label>
                     </div>
 
-                    <button type="button" style={{marginTop: '20px', padding: '10px 24px', cursor: 'pointer'}}>Submit</button>
+                    <button type="button" onClick={handleSubmit} style={{marginTop: '20px', padding: '10px 24px', cursor: 'pointer'}}>Submit</button>
+                    {status && <p style={{marginTop: '12px', color: status.ok ? 'green' : 'red', fontWeight: 'bold'}}>{status.text}</p>}
                 </div>
             );
         }
