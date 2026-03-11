@@ -27,21 +27,21 @@ INSERT INTO tickets (
 )
 VALUES
   -- Unstarted column (unassigned)
-  ('T2001', 'John Smith', 'Screen replacement', 'Laptop', 'High', 'Waiting to Start', NULL, 1000),
-  ('T2002', 'Emily Clark', 'Virus removal', 'Desktop', 'Normal', 'Waiting to Start', NULL, 1000),
+  ('T2001', 'Taco Bell', 'Screen replacement', 'Laptop', 'High', 'Waiting to Start', NULL, 1000),
+  ('T2002', 'Professor X', 'Virus removal', 'Desktop', 'Normal', 'Waiting to Start', NULL, 1000),
 
-  -- Michael column (mix of statuses)
-  ('T2003', 'Mia Johnson', 'Battery not charging', 'Laptop', 'Urgent', 'In Progress',
+  -- Michael column 
+  ('T2003', 'Toronto Raptors', 'Battery not charging', 'Laptop', 'Urgent', 'In Progress',
     (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 0),
-  ('T2004', 'Sarah Lee', 'OS reinstall', 'Desktop', 'Normal', 'Waiting for Customer Response',
+  ('T2004', 'Lu Lee', 'OS reinstall', 'Desktop', 'Normal', 'Waiting for Customer Response',
     (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 1000),
-  ('T2005', 'Alex Carter', 'Keyboard replacement (parts pending)', 'Laptop', 'Normal', 'Waiting for Part',
+  ('T2005', 'Iron Man', 'Keyboard replacement (parts pending)', 'Laptop', 'Normal', 'Waiting for Part',
     (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 1000),
 
   -- Isaac column
-  ('T2006', 'Noah Brown', 'Data transfer', 'Laptop', 'Normal', 'In Progress',
+  ('T2006', 'Joohn Ceeena', 'Data transfer', 'Laptop', 'Normal', 'In Progress',
     (SELECT technician_id FROM technicians WHERE email='isaac@board.com'), 0),
-  ('T2007', 'Olivia White', 'Device running slow', 'Desktop', 'Low', 'Waiting to Start',
+  ('T2007', 'Daft Punk', 'Device running slow', 'Desktop', 'Low', 'Waiting to Start',
     (SELECT technician_id FROM technicians WHERE email='isaac@board.com'), 1000)
 
 ON CONFLICT (ticket_number) DO NOTHING;
