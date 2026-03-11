@@ -137,7 +137,7 @@
     <div class="app">
       <aside class="sidebar">
         <div class="search-row">
-          <input class="search-input" type="text" placeholder="Search..." />
+          <input id="searchInput" class="search-input" type="text" placeholder="Search..." />
           <div class="icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <circle cx="11" cy="11" r="7" stroke="#000" stroke-width="2"></circle>
@@ -146,51 +146,88 @@
           </div>
         </div>
 
-        <div class="ticket-list">
-          <div class="ticket">
-            <div class="name">Mun Choi #45607</div>
-            <div class="type">Desktop</div>
-            <div class="issue">Custom Gaming PC</div>
-          </div>
-
-          <div class="ticket selected">
-            <div class="name">Fang Wang #45601</div>
-            <div class="type">Desktop</div>
-            <div class="issue">Mobo Failure</div>
-          </div>
-
-          <div class="ticket">
-            <div class="name">Dale Musser #45604</div>
-            <div class="type">Laptop</div>
-            <div class="issue">Data Transfer</div>
-          </div>
-
-          <div class="ticket">
-            <div class="name">Spot the Dog #45610</div>
-            <div class="type">Laptop</div>
-            <div class="issue">Tune-Up</div>
-          </div>
-
-          <div class="ticket">
-            <div class="name">Mark Twain #45612</div>
-            <div class="type">Desktop</div>
-            <div class="issue">No Power</div>
-          </div>
-
-          <div class="ticket">
-            <div class="name">Kris Culmer #45615</div>
-            <div class="type">Laptop</div>
-            <div class="issue">Screen Replacement</div>
-          </div>
-        </div>
+        <div id="ticketList" class="ticket-list"></div>
       </aside>
 
-      <main class="detail">
-        <h1>Fang Wang #45601</h1>
-        <div class="line">Device Description: Black IBuyPower Prebuilt</div>
-        <div class="line">Assigned Technician: Isaac Rivera</div>
-        <div class="line">Status: In Progress. Waiting for customer response. Started 2:58pm, 2-12-2026.</div>
+      <main id="detailPanel" class="detail">
+        <h1>Select a ticket</h1>
+        <div class="line">Device Description:</div>
+        <div class="line">Assigned Technician:</div>
+        <div class="line">Status:</div>
       </main>
     </div>
+<script>
+  const searchInput = document.getElementById('searchInput');
+  const ticketList = document.getElementById('ticketList');
+  const detailPanel = document.getElementById('detailPanel');
+
+  async function searchTickets(query = '') {
+    try {
+      const res = await fetch(`/tickets/search?q=${encodeURIComponent(query)}`);
+      const tickets = await res.json();
+      renderTicketList(tickets);
+    } catch (err) {
+      console.error('Search failed:', err);
+      ticketList.innerHTML = '<div class="ticket">Failed to load tickets.</div>';
+    }
+  }
+
+  function renderTicketList(tickets) {
+    ticketList.innerHTML = '';
+
+    if (!tickets.length) {
+      ticketList.innerHTML = '<div class="ticket"><div class="name">No matching tickets</div></div>';
+      return;
+    }
+
+    tickets.forEach(ticket => {
+      const div = document.createElement('div');
+      div.className = 'ticket';
+      div.innerHTML = `
+        <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
+        <div class="type">${ticket.device_type || 'Unknown'}</div>
+        <div class="issue">${ticket.issue_summary}</div>
+      `;
+
+      div.addEventListener('click', () => {
+        document.querySelectorAll('.ticket').forEach(t => t.classList.remove('selected'));
+        div.classList.add('selected');
+        loadTicket(ticket.ticket_number);
+      });
+
+      ticketList.appendChild(div);
+    });
+  }
+
+  async function loadTicket(ticketNumber) {
+    try {
+      const res = await fetch(`/tickets/${ticketNumber}`);
+      const ticket = await res.json();
+
+      detailPanel.innerHTML = `
+        <h1>${ticket.cust_name} #${ticket.ticket_number}</h1>
+        <div class="line">Device Type: ${ticket.device_type || 'N/A'}</div>
+        <div class="line">Issue: ${ticket.issue_summary}</div>
+        <div class="line">Assigned Technician: ${ticket.technician_name || 'Unassigned'}</div>
+        <div class="line">Priority: ${ticket.priority_level}</div>
+        <div class="line">Status: ${ticket.current_status}</div>
+        <div class="line">Created: ${ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'N/A'}</div>
+      `;
+    } catch (err) {
+      console.error('Ticket detail failed:', err);
+      detailPanel.innerHTML = '<h1>Error</h1><div class="line">Could not load ticket details.</div>';
+    }
+  }
+
+  let timeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      searchTickets(searchInput.value.trim());
+    }, 250);
+  });
+
+  searchTickets();
+</script>
   </body>
 </html>
