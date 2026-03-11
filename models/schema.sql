@@ -18,13 +18,21 @@ CREATE TABLE IF NOT EXISTS tickets (
 	cust_name VARCHAR(100) NOT NULL,
 	issue_summary TEXT NOT NULL,
 	device_type VARCHAR(100),
+
+	-- Priority is kept for reporting/labeling, not for board ordering
 	priority_level VARCHAR(20) NOT NULL DEFAULT 'Normal',
+
 	current_status VARCHAR(50) NOT NULL DEFAULT 'Waiting to Start',
 	assigned_technician_id INT,
+
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	started_at TIMESTAMP,
 	completed_at TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+	-- Board ordering inside each technician column/status bucket
+	-- Lower numbers appear higher
+	sort_order INT DEFAULT 1000,
 
 	CONSTRAINT fk_assigned_technician
 		FOREIGN KEY (assigned_technician_id) 
@@ -90,13 +98,9 @@ CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp
 CREATE INDEX IF NOT EXISTS idx_events_ticket_time_desc
 ON ticket_events(ticket_id, event_timestamp DESC);
 
-ALTER TABLE tickets
-  ALTER COLUMN sort_order SET DEFAULT 1000;
-
-CREATE INDEX IF NOT EXISTS idx_ticket_sort
-  ON tickets(assigned_technician_id, current_status, sort_order);
-
-
+-- Board retrieval index
+CREATE INDEX IF NOT EXISTS idx_ticket_board
+ON tickets(assigned_technician_id, current_status, sort_order, created_at);
 
 
 
