@@ -7,12 +7,39 @@ async function createTicket(req, res) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  console.log('New ticket received:', req.body);
+  const custName = `${firstName.trim()} ${lastName.trim()}`.trim();
+  const issueSummary = deviceDescription && deviceDescription.trim()
+    ? `${deviceDescription.trim()} - ${jobDescription.trim()}`
+    : jobDescription.trim();
 
-  res.status(201).json({
-    message: 'Ticket received',
-    ticket: { firstName, lastName, workOrder, deviceDescription, jobDescription, deviceType }
-  });
+  try {
+    const result = await pool.query(
+      `
+      INSERT INTO tickets (
+        ticket_number,
+        cust_name,
+        issue_summary,
+        device_type
+      )
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+      `,
+      [workOrder.trim(), custName, issueSummary, deviceType.trim()]
+    );
+
+    res.status(201).json({
+      message: 'Ticket created successfully',
+      ticket: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Create ticket error:', err);
+
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'That work order number already exists.' });
+    }
+
+    res.status(500).json({ error: 'Failed to create ticket' });
+  }
 }
 
 async function searchTickets(req, res) {

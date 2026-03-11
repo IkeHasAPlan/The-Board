@@ -48,6 +48,7 @@
     </style>
 </head>
 <body>
+    <a href="/home.html" style="display:block;margin:10px;font-weight:bold;">← Home</a>
     <div id="root"></div>
     <script type="text/babel">
         function App() {
@@ -75,7 +76,7 @@
                 }
 
                 try {
-                    const res = await fetch('http://localhost:3001/tickets', {
+                    const res = await fetch('/tickets', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(form)
@@ -83,7 +84,7 @@
                     const data = await res.json();
 
                     if (res.ok) {
-                        setStatus({ ok: true, text: 'Ticket submitted!' });
+                        setStatus({ ok: true, text: `Ticket ${data.ticket.ticket_number} submitted!` });
                         setForm({ firstName: '', lastName: '', workOrder: '', deviceDescription: '', jobDescription: '', deviceType: '' });
                     } else {
                         setStatus({ ok: false, text: data.error || 'Something went wrong.' });

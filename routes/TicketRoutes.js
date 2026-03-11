@@ -6,6 +6,8 @@ const {
   getTicketByNumber
 } = require('../controllers/TicketController');
 
+
+
 router.post('/', createTicket);
 router.get('/search', searchTickets);
 router.get('/:ticketNumber', getTicketByNumber);
