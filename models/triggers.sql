@@ -1,72 +1,129 @@
 --
--- The Board Reports
--- reports.sql
+-- The Board Triggers
+-- triggers.sql
 --
 
--- Unassigned (left column) count
-SELECT COUNT(*) AS unassigned_open_tickets
-FROM tickets
-WHERE assigned_technician_id IS NULL
-  AND current_status <> 'Done';
+-- Automatically maintain tickets.updated_at
+CREATE OR REPLACE FUNCTION set_ticket_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Completed (right column) count
-SELECT COUNT(*) AS completed_tickets
-FROM tickets
-WHERE current_status = 'Done';
+DROP TRIGGER IF EXISTS trigger_ticket_updated_at ON tickets;
+CREATE TRIGGER trigger_ticket_updated_at
+BEFORE UPDATE ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION set_ticket_updated_at();
 
--- Backlog by status (all tickets)
-SELECT current_status, COUNT(*) AS ticket_count
-FROM tickets
-GROUP BY current_status
-ORDER BY ticket_count DESC, current_status;
 
--- Active workload by technician (not Done)
-SELECT t.name,
-       COUNT(k.ticket_id) AS active_tickets
-FROM technicians t
-LEFT JOIN tickets k
-  ON t.technician_id = k.assigned_technician_id
- AND k.current_status <> 'Done'
-GROUP BY t.technician_id, t.name
-ORDER BY active_tickets DESC, t.name;
+-- Log CREATED event when a ticket is inserted
+CREATE OR REPLACE FUNCTION log_ticket_created()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO ticket_events(ticket_id, event_type, technician_id)
+  VALUES (NEW.ticket_id, 'CREATED', NEW.assigned_technician_id);
 
--- Average completion time (hours)
-SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) / 3600.0 AS avg_completion_hours
-FROM tickets
-WHERE started_at IS NOT NULL
-  AND completed_at IS NOT NULL;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Board pull for one technician
--- Replace $1 with a technician_id in pgAdmin
-SELECT ticket_id,
-       ticket_number,
-       cust_name,
-       issue_summary,
-       current_status,
-       sort_order,
-       created_at,
-       updated_at
-FROM tickets
-WHERE assigned_technician_id = (SELECT technician_id FROM technicians WHERE email='michael@board.com')
-  AND current_status <> 'Done'
-ORDER BY
-  CASE current_status
-    WHEN 'In Progress' THEN 1
-    WHEN 'Waiting to Start' THEN 2
-    WHEN 'Waiting for Customer Response' THEN 3
-    WHEN 'Waiting for Part' THEN 4
-    ELSE 5
-  END,
-  sort_order,
-  created_at;
+DROP TRIGGER IF EXISTS trigger_ticket_created ON tickets;
+CREATE TRIGGER trigger_ticket_created
+AFTER INSERT ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION log_ticket_created();
 
--- Ticket event log (audit/history)
-SELECT event_id,
-       ticket_id,
-       event_type,
-       old_status,
-       new_status,
-       technician_id,
-       event_timestamp
-FROM ticket_events
-ORDER BY event_timestamp DESC;
+
+-- Automatically set started_at / completed_at based on status transitions
+CREATE OR REPLACE FUNCTION set_ticket_lifecycle_timestamps()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.current_status IS DISTINCT FROM OLD.current_status THEN
+
+    IF NEW.current_status = 'In Progress' AND OLD.started_at IS NULL THEN
+      NEW.started_at = COALESCE(NEW.started_at, CURRENT_TIMESTAMP);
+    END IF;
+
+    IF NEW.current_status = 'Done' THEN
+      NEW.completed_at = COALESCE(NEW.completed_at, CURRENT_TIMESTAMP);
+    END IF;
+
+    IF OLD.current_status = 'Done' AND NEW.current_status <> 'Done' THEN
+      NEW.completed_at = NULL;
+    END IF;
+
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_set_lifecycle_timestamps ON tickets;
+CREATE TRIGGER trigger_set_lifecycle_timestamps
+BEFORE UPDATE OF current_status ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION set_ticket_lifecycle_timestamps();
+
+
+-- Write status-change record to ticket_events
+CREATE OR REPLACE FUNCTION log_ticket_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.current_status IS DISTINCT FROM OLD.current_status THEN
+    INSERT INTO ticket_events(
+      ticket_id,
+      event_type,
+      old_status,
+      new_status,
+      technician_id
+    )
+    VALUES (
+      NEW.ticket_id,
+      'STATUS_CHANGE',
+      OLD.current_status,
+      NEW.current_status,
+      NEW.assigned_technician_id
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_status_change ON tickets;
+CREATE TRIGGER trigger_status_change
+AFTER UPDATE OF current_status ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION log_ticket_status_change();
+
+
+-- Write assignment-change record to ticket_events
+CREATE OR REPLACE FUNCTION log_ticket_assignment_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.assigned_technician_id IS DISTINCT FROM OLD.assigned_technician_id THEN
+    INSERT INTO ticket_events(
+      ticket_id,
+      event_type,
+      technician_id
+    )
+    VALUES (
+      NEW.ticket_id,
+      'ASSIGNMENT_CHANGE',
+      NEW.assigned_technician_id
+    );
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_assignment_change ON tickets;
+CREATE TRIGGER trigger_assignment_change
+AFTER UPDATE OF assigned_technician_id ON tickets
+FOR EACH ROW
+EXECUTE FUNCTION log_ticket_assignment_change();
+
