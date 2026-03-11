@@ -13,7 +13,8 @@ VALUES
   ('Bryson Allen', 'bryson@board.com')
 ON CONFLICT (email) DO NOTHING;
 
--- Tickets 
+-- Tickets
+-- NOTE: assigned_technician_id is looked up by email so IDs never matter.
 INSERT INTO tickets (
   ticket_number,
   cust_name,
@@ -22,38 +23,25 @@ INSERT INTO tickets (
   priority_level,
   current_status,
   assigned_technician_id,
-  started_at,
-  completed_at
+  sort_order
 )
 VALUES
-  ('T1001', 'Godzilla', 'Screen replacement', 'Laptop', 'High', 'Waiting to Start',
-    NULL, NULL, NULL),
+  -- Unstarted column (unassigned)
+  ('T2001', 'John Smith', 'Screen replacement', 'Laptop', 'High', 'Waiting to Start', NULL, 1000),
+  ('T2002', 'Emily Clark', 'Virus removal', 'Desktop', 'Normal', 'Waiting to Start', NULL, 1000),
 
-  ('T1002', 'Pizza Hutt', 'Virus removal', 'Desktop', 'Normal', 'In Progress',
-    (SELECT technician_id FROM technicians WHERE email='isaac@board.com'),
-    CURRENT_TIMESTAMP, NULL),
+  -- Michael column (mix of statuses)
+  ('T2003', 'Mia Johnson', 'Battery not charging', 'Laptop', 'Urgent', 'In Progress',
+    (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 0),
+  ('T2004', 'Sarah Lee', 'OS reinstall', 'Desktop', 'Normal', 'Waiting for Customer Response',
+    (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 1000),
+  ('T2005', 'Alex Carter', 'Keyboard replacement (parts pending)', 'Laptop', 'Normal', 'Waiting for Part',
+    (SELECT technician_id FROM technicians WHERE email='michael@board.com'), 1000),
 
-  ('T1003', 'Larry Bird', 'Data transfer', 'Laptop', 'Urgent', 'Waiting for Part',
-    (SELECT technician_id FROM technicians WHERE email='gideon@board.com'),
-    CURRENT_TIMESTAMP, NULL),
+  -- Isaac column
+  ('T2006', 'Noah Brown', 'Data transfer', 'Laptop', 'Normal', 'In Progress',
+    (SELECT technician_id FROM technicians WHERE email='isaac@board.com'), 0),
+  ('T2007', 'Olivia White', 'Device running slow', 'Desktop', 'Low', 'Waiting to Start',
+    (SELECT technician_id FROM technicians WHERE email='isaac@board.com'), 1000)
 
-  ('T1004', 'Professional Egyptian', 'Battery replacement', 'Laptop', 'Low', 'Done',
-    (SELECT technician_id FROM technicians WHERE email='ashton@board.com'),
-    CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-
-  ('T1005', 'Saromon Ring', 'OS reinstall', 'Desktop', 'Normal', 'Waiting for Customer Response',
-    (SELECT technician_id FROM technicians WHERE email='michael@board.com'),
-    CURRENT_TIMESTAMP, NULL)
 ON CONFLICT (ticket_number) DO NOTHING;
-
--- Event seeds
--- Insert a CREATED event for each seeded ticket 
-INSERT INTO ticket_events (ticket_id, event_type, technician_id)
-SELECT t.ticket_id, 'CREATED', t.assigned_technician_id
-FROM tickets t
-WHERE t.ticket_number IN ('T1001','T1002','T1003','T1004','T1005')
-  AND NOT EXISTS (
-    SELECT 1 FROM ticket_events e
-    WHERE e.ticket_id = t.ticket_id
-      AND e.event_type = 'CREATED'
-  );
