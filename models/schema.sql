@@ -90,5 +90,13 @@ CREATE INDEX IF NOT EXISTS idx_events_timestamp ON ticket_events(event_timestamp
 CREATE INDEX IF NOT EXISTS idx_events_ticket_time_desc
 ON ticket_events(ticket_id, event_timestamp DESC);
 
+ALTER TABLE tickets
+  ALTER COLUMN sort_order SET DEFAULT 1000;
+
+CREATE INDEX IF NOT EXISTS idx_ticket_sort
+  ON tickets(assigned_technician_id, current_status, sort_order);
+
+
+
 
 
