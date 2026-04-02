@@ -90,6 +90,9 @@ function Board() {
       next[tech].actively = next[tech].actively.filter(
         (t) => t.ticket_id !== ticket.ticket_id
       );
+      next[tech].waiting = (next[tech].waiting || []).filter(
+      (t) => t.ticket_id !== ticket.ticket_id
+    );
     }
 
     return {
@@ -207,6 +210,42 @@ function Board() {
     }
   };
 
+  const handleStatusChange = async (ticket, newStatus) => {
+    const updatedTicket = {...ticket, current_status: newStatus};
+
+      const { newData, newNew, newResolved } = removeTicketEverywhere(
+        ticket,
+        ticketData,
+        newTickets,
+        resolvedTickets
+    );
+    if(newStatus === "Done") {
+      setResolvedTickets([...newResolved, updatedTicket]);
+    }
+    else if( newStatus === "Waiting to Start" || !updatedTicket.technician_name){
+      console.log("Adding to new tickets:", updatedTicket);
+      console.log("Current newNew:", newNew);
+      setNewTickets([...newNew, updatedTicket]);
+    }
+    else {
+      const next = structuredClone(newData);
+      next[updatedTicket.technician_name].actively.push(updatedTicket);
+      setTicketData(next);
+    }
+
+    try{
+      await persistMove(ticket.ticket_id, {
+        currentStatus: newStatus,
+        assignedTechnicianId: newStatus === "Waiting to Start" ? null : undefined,
+      });
+    }
+    catch(err){
+      console.error(err)
+      alert("Failed to update status")
+      window.location.reload();
+    }
+  };
+
   if (loading) return <div>Loading board...</div>;
   if (error) return <div>{error}</div>;
 
@@ -240,7 +279,7 @@ function Board() {
         onDrop={handleDropOnNew}
       >
         {newTickets.map((ticket) => (
-          <TicketCard key={ticket.ticket_id} ticket={ticket} type="new" />
+          <TicketCard key={ticket.ticket_id} ticket={ticket} type="new" onStatusChange={handleStatusChange} />
         ))}
       </div>
 
@@ -257,6 +296,7 @@ function Board() {
               key={ticket.ticket_id}
               ticket={ticket}
               type="actively"
+              onStatusChange={handleStatusChange}
             />
           ))}
         </div>
@@ -269,7 +309,7 @@ function Board() {
         onDrop={handleDropOnResolved}
       >
         {resolvedTickets.map((ticket) => (
-          <TicketCard key={ticket.ticket_id} ticket={ticket} type="resolved" />
+          <TicketCard key={ticket.ticket_id} ticket={ticket} type="resolved" onStatusChange={handleStatusChange} />
         ))}
       </div>
     </div>

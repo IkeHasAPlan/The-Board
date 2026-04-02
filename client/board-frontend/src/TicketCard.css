@@ -27,3 +27,16 @@
 .ticketName {
   font-size: 0.85rem;
 }
+
+
+.ticketCard select {
+  background-color: transparent;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  color: inherit;
+  cursor: pointer;
+
+  appearance: none;
+}
