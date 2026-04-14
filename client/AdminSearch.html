@@ -3,232 +3,565 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Board UI</title>
+    <title>Search Tickets</title>
     <style>
       :root {
-        --outer: 4px solid #000;
-        --inner: 2px solid #000;
-        --selected: #1687d9;
+        --bg: #0b1f3a;
+        --panel: #111827;
+        --panel-2: #1e293b;
+        --border: #243047;
+        --border-2: #334155;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #3b82f6;
+        --accent-2: #60a5fa;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
         --font: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       }
 
-      * { box-sizing: border-box; }
-      html, body { height: 100%; }
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        min-height: 100%;
+      }
 
       body {
         margin: 0;
         font-family: var(--font);
-        background: #fff;
-        color: #000;
+        background: var(--bg);
+        color: var(--text);
+        padding: 24px;
+      }
+
+      .page {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 22px;
+      }
+
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .back-button:hover {
+        border-color: var(--accent);
+        background: #172033;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+      }
+
+      .branding {
+        text-align: center;
+        margin-bottom: 22px;
+      }
+
+      .logo {
+        width: 360px;
+        max-width: 90%;
+        height: auto;
+        margin-bottom: 8px;
+      }
+
+      .page-title {
+        margin: 0;
+        font-size: 36px;
+        font-weight: 800;
+        color: #ffffff;
+      }
+
+      .page-subtitle {
+        margin: 8px 0 0 0;
+        color: var(--muted);
+        font-size: 15px;
       }
 
       .app {
-        height: 100vh;
-        display: flex;
+        display: grid;
+        grid-template-columns: 360px 1fr;
         gap: 24px;
-        padding: 18px;
+        align-items: start;
+      }
+
+      .sidebar,
+      .detail {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
       }
 
       .sidebar {
-        width: 320px;
-        flex: 0 0 320px;
-        border: var(--outer);
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        min-width: 320px;
+        padding: 16px;
+        min-height: 620px;
+      }
+
+      .detail {
+        padding: 24px 26px;
+        min-height: 620px;
       }
 
       .search-row {
         display: flex;
         align-items: center;
         gap: 10px;
+        margin-bottom: 14px;
       }
 
       .search-input {
         flex: 1;
-        height: 38px;
-        border: var(--inner);
-        border-radius: 999px;
-        padding: 0 12px;
-        font-size: 14px;
+        height: 44px;
+        border: 1px solid var(--border-2);
+        border-radius: 12px;
+        padding: 0 14px;
+        font-size: 15px;
         outline: none;
+        background: var(--panel-2);
+        color: var(--text);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
 
-      .icon {
-        width: 28px;
-        height: 28px;
+      .search-input::placeholder {
+        color: var(--muted);
+      }
+
+      .search-input:focus {
+        border-color: var(--accent-2);
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+      }
+
+      .search-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid var(--border-2);
+        background: var(--panel-2);
         display: grid;
         place-items: center;
+        flex: 0 0 44px;
       }
 
       .ticket-list {
-        margin-top: 12px;
-        flex: 1;
-        overflow: auto;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding-right: 6px;
+        max-height: 540px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .ticket-list::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .ticket-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .ticket-list::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 999px;
       }
 
       .ticket {
-        border: var(--inner);
-        padding: 10px 10px 12px;
-        min-height: 86px;
+        border: 1px solid var(--border-2);
+        border-radius: 14px;
+        padding: 14px;
+        background: var(--panel-2);
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 8px 12px;
         align-items: start;
-        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .ticket:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
       }
 
       .ticket .name {
         font-weight: 800;
-        font-size: 13px;
+        font-size: 14px;
+        color: #ffffff;
       }
 
       .ticket .type {
-        font-weight: 800;
+        font-weight: 700;
         font-size: 13px;
+        color: #cbd5e1;
       }
 
       .ticket .issue {
         grid-column: 1 / -1;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 500;
+        color: var(--muted);
         margin-top: 2px;
       }
 
       .ticket.selected {
-        border: 4px solid var(--selected);
-        padding: 8px 8px 10px;
+        border: 2px solid var(--accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
       }
 
-      .detail {
-        flex: 1;
-        border: var(--outer);
-        padding: 18px 22px;
-        overflow: auto;
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 22px;
       }
 
-      .detail h1 {
-        margin: 0 0 18px;
-        text-align: center;
-        font-size: 24px;
-        font-weight: 900;
-        text-decoration: underline;
+      .detail-header h1 {
+        margin: 0;
+        text-align: left;
+        font-size: 30px;
+        font-weight: 800;
+        color: #ffffff;
       }
 
-      .line {
-        margin: 18px 0;
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: #1d4ed8;
+        color: #ffffff;
         font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        border: 1px solid #60a5fa;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .detail-card {
+        background: var(--panel-2);
+        border: 1px solid var(--border-2);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .detail-card.full {
+        grid-column: 1 / -1;
+      }
+
+      .detail-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 8px;
         font-weight: 700;
       }
 
-      @media (max-width: 520px) {
-        .app { flex-direction: column; }
-        .sidebar { width: 100%; min-width: 0; }
+      .detail-value {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        word-break: break-word;
+      }
+
+      .timeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .timeline-item {
+        padding-bottom: 12px;
+        border-bottom: 1px solid #334155;
+      }
+
+      .timeline-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .timeline-text {
+        font-weight: 600;
+        color: #f8fafc;
+      }
+
+      .timeline-time {
+        color: #94a3b8;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--muted);
+        padding-top: 60px;
+      }
+
+      .empty-state h2 {
+        color: #ffffff;
+        margin-bottom: 10px;
+      }
+
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar,
+        .detail {
+          min-height: auto;
+        }
+
+        .ticket-list {
+          max-height: 400px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 16px;
+        }
+
+        .page-title {
+          font-size: 30px;
+        }
+
+        .detail {
+          padding: 18px;
+        }
+
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-card.full {
+          grid-column: auto;
+        }
+
+        .detail-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .detail-header h1 {
+          text-align: left;
+        }
       }
     </style>
   </head>
 
   <body>
-    <a href="/home.html" style="display:block;margin:10px;font-weight:bold;">← Home</a>
-    <div class="app">
-      <aside class="sidebar">
-        <div class="search-row">
-          <input id="searchInput" class="search-input" type="text" placeholder="Search..." />
-          <div class="icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="7" stroke="#000" stroke-width="2"></circle>
-              <path d="M20 20L17 17" stroke="#000" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
+    <div class="page">
+      <div class="topbar">
+        <a href="/home.html" class="back-button">← Back to Dashboard</a>
+      </div>
+
+      <div class="branding">
+        <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo" />
+        <h1 class="page-title">Search Tickets</h1>
+        <p class="page-subtitle">Find an existing ticket and view its details.</p>
+      </div>
+
+      <div class="app">
+        <aside class="sidebar">
+          <div class="search-row">
+            <input id="searchInput" class="search-input" type="text" placeholder="Search by customer, ticket, or issue..." />
+            <div class="search-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="7" stroke="#cbd5e1" stroke-width="2"></circle>
+                <path d="M20 20L17 17" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"></path>
+              </svg>
+            </div>
           </div>
-        </div>
 
-        <div id="ticketList" class="ticket-list"></div>
-      </aside>
+          <div id="ticketList" class="ticket-list"></div>
+        </aside>
 
-      <main id="detailPanel" class="detail">
-        <h1>Select a ticket</h1>
-        <div class="line">Device Description:</div>
-        <div class="line">Assigned Technician:</div>
-        <div class="line">Status:</div>
-      </main>
+        <main id="detailPanel" class="detail">
+          <div class="empty-state">
+            <h2>Select a ticket</h2>
+            <p>Choose a result from the left to view its details.</p>
+          </div>
+        </main>
+      </div>
     </div>
-<script>
-  const searchInput = document.getElementById('searchInput');
-  const ticketList = document.getElementById('ticketList');
-  const detailPanel = document.getElementById('detailPanel');
 
-  async function searchTickets(query = '') {
-    try {
-      const res = await fetch(`/tickets/search?q=${encodeURIComponent(query)}`);
-      const tickets = await res.json();
-      renderTicketList(tickets);
-    } catch (err) {
-      console.error('Search failed:', err);
-      ticketList.innerHTML = '<div class="ticket">Failed to load tickets.</div>';
-    }
-  }
+    <script>
+      const searchInput = document.getElementById('searchInput');
+      const ticketList = document.getElementById('ticketList');
+      const detailPanel = document.getElementById('detailPanel');
 
-  function renderTicketList(tickets) {
-    ticketList.innerHTML = '';
+      async function searchTickets(query = '') {
+        try {
+          const res = await fetch(`/tickets/search?q=${encodeURIComponent(query)}`);
+          const tickets = await res.json();
+          renderTicketList(tickets);
+        } catch (err) {
+          console.error('Search failed:', err);
+          ticketList.innerHTML = '<div class="ticket"><div class="name">Failed to load tickets.</div></div>';
+        }
+      }
 
-    if (!tickets.length) {
-      ticketList.innerHTML = '<div class="ticket"><div class="name">No matching tickets</div></div>';
-      return;
-    }
+      function renderTicketList(tickets) {
+        ticketList.innerHTML = '';
 
-    tickets.forEach(ticket => {
-      const div = document.createElement('div');
-      div.className = 'ticket';
-      div.innerHTML = `
-        <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
-        <div class="type">${ticket.device_type || 'Unknown'}</div>
-        <div class="issue">${ticket.issue_summary}</div>
-      `;
+        if (!tickets.length) {
+          ticketList.innerHTML = '<div class="ticket"><div class="name">No matching tickets</div></div>';
+          return;
+        }
 
-      div.addEventListener('click', () => {
-        document.querySelectorAll('.ticket').forEach(t => t.classList.remove('selected'));
-        div.classList.add('selected');
-        loadTicket(ticket.ticket_number);
+        tickets.forEach(ticket => {
+          const div = document.createElement('div');
+          div.className = 'ticket';
+          div.innerHTML = `
+            <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
+            <div class="type">${ticket.device_type || 'Unknown'}</div>
+            <div class="issue">${ticket.issue_summary}</div>
+          `;
+
+          div.addEventListener('click', () => {
+            document.querySelectorAll('.ticket').forEach(t => t.classList.remove('selected'));
+            div.classList.add('selected');
+            loadTicket(ticket.ticket_number);
+          });
+
+          ticketList.appendChild(div);
+        });
+      }
+
+      async function loadTicketHistory(ticketNumber) {
+        const timeline = document.getElementById('ticketTimeline');
+        if (!timeline) return;
+
+        try {
+          const res = await fetch(`/tickets/${ticketNumber}/history`);
+
+          if (!res.ok) {
+            timeline.innerHTML = 'Failed to load timeline.';
+            return;
+          }
+
+          const events = await res.json();
+
+          if (!Array.isArray(events) || events.length === 0) {
+            timeline.innerHTML = 'No timeline history available yet.';
+            return;
+          }
+
+          timeline.innerHTML = events.map(event => {
+            let text = '';
+
+            if (event.event_type === 'CREATED') {
+              text = 'Ticket created';
+            } else if (event.event_type === 'STATUS_CHANGE') {
+              text = `Status changed from "${event.old_status}" to "${event.new_status}"`;
+            } else if (event.event_type === 'ASSIGNMENT_CHANGE') {
+              text = `Assigned to ${event.technician_name || 'a technician'}`;
+            } else {
+              text = event.event_type || 'Event updated';
+            }
+
+            return `
+              <div class="timeline-item">
+                <div class="timeline-text">${text}</div>
+                <div class="timeline-time">
+                  ${event.event_timestamp ? new Date(event.event_timestamp).toLocaleString() : 'Unknown time'}
+                </div>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error('Timeline load failed:', err);
+          timeline.innerHTML = 'Failed to load timeline.';
+        }
+      }
+
+      async function loadTicket(ticketNumber) {
+        try {
+          const res = await fetch(`/tickets/${ticketNumber}`);
+          const ticket = await res.json();
+
+          detailPanel.innerHTML = `
+            <div class="detail-header">
+              <h1>${ticket.cust_name} #${ticket.ticket_number}</h1>
+              <div class="status-badge">${ticket.current_status || 'N/A'}</div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-card">
+                <div class="detail-label">Device Type</div>
+                <div class="detail-value">${ticket.device_type || 'N/A'}</div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Device Description</div>
+                <div class="detail-value">${ticket.device_description || 'N/A'}</div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Assigned Technician</div>
+                <div class="detail-value">${ticket.technician_name || 'Unassigned'}</div>
+              </div>
+
+              <div class="detail-card">
+                <div class="detail-label">Priority</div>
+                <div class="detail-value">${ticket.priority_level || 'N/A'}</div>
+              </div>
+
+              <div class="detail-card full">
+                <div class="detail-label">Issue</div>
+                <div class="detail-value">${ticket.issue_summary || 'N/A'}</div>
+              </div>
+
+              <div class="detail-card full">
+                <div class="detail-label">Timeline</div>
+                <div id="ticketTimeline" class="timeline-list">Loading timeline...</div>
+              </div>
+            </div>
+          `;
+
+          loadTicketHistory(ticket.ticket_number);
+        } catch (err) {
+          console.error('Ticket detail failed:', err);
+          detailPanel.innerHTML = `
+            <div class="empty-state">
+              <h2>Error</h2>
+              <p>Could not load ticket details.</p>
+            </div>
+          `;
+        }
+      }
+
+      let timeout;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          searchTickets(searchInput.value.trim());
+        }, 250);
       });
 
-      ticketList.appendChild(div);
-    });
-  }
-
-  async function loadTicket(ticketNumber) {
-    try {
-      const res = await fetch(`/tickets/${ticketNumber}`);
-      const ticket = await res.json();
-
-      detailPanel.innerHTML = `
-        <h1>${ticket.cust_name} #${ticket.ticket_number}</h1>
-        <div class="line">Device Type: ${ticket.device_type || 'N/A'}</div>
-        <div class="line">Issue: ${ticket.issue_summary}</div>
-        <div class="line">Assigned Technician: ${ticket.technician_name || 'Unassigned'}</div>
-        <div class="line">Priority: ${ticket.priority_level}</div>
-        <div class="line">Status: ${ticket.current_status}</div>
-        <div class="line">Created: ${ticket.created_at ? new Date(ticket.created_at).toLocaleString() : 'N/A'}</div>
-      `;
-    } catch (err) {
-      console.error('Ticket detail failed:', err);
-      detailPanel.innerHTML = '<h1>Error</h1><div class="line">Could not load ticket details.</div>';
-    }
-  }
-
-  let timeout;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      searchTickets(searchInput.value.trim());
-    }, 250);
-  });
-
-  searchTickets();
-</script>
+      searchTickets();
+    </script>
   </body>
 </html>

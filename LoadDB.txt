@@ -1,0 +1,16 @@
+COMMANDS TO REFRESH THE DATABASE
+
+
+dump DATABASE
+
+pg_dump -U postgres -d board -f board_backup.sql
+psql -U postgres -d postgres -c "DROP DATABASE IF EXISTS board;"
+
+create new DATABASE
+psql -U postgres -d postgres -c "CREATE DATABASE board;"
+
+create schema
+psql -U postgres -d board -f .\models\schema.sql
+
+seed data
+psql -U postgres -d board -f .\models\seed.sql

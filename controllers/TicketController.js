@@ -8,9 +8,6 @@ async function createTicket(req, res) {
   }
 
   const custName = `${firstName.trim()} ${lastName.trim()}`.trim();
-  const issueSummary = deviceDescription && deviceDescription.trim()
-    ? `${deviceDescription.trim()} - ${jobDescription.trim()}`
-    : jobDescription.trim();
 
   try {
     const result = await pool.query(
@@ -19,12 +16,19 @@ async function createTicket(req, res) {
         ticket_number,
         cust_name,
         issue_summary,
+        device_description,
         device_type
       )
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [workOrder.trim(), custName, issueSummary, deviceType.trim()]
+      [
+        workOrder.trim(),
+        custName,
+        jobDescription.trim(),
+        deviceDescription ? deviceDescription.trim() : null,
+        deviceType.trim()
+      ]
     );
 
     res.status(201).json({
@@ -53,6 +57,7 @@ async function searchTickets(req, res) {
         t.ticket_number,
         t.cust_name,
         t.issue_summary,
+        t.device_description,
         t.device_type,
         t.priority_level,
         t.current_status,
@@ -92,6 +97,7 @@ async function getTicketByNumber(req, res) {
         t.ticket_number,
         t.cust_name,
         t.issue_summary,
+        t.device_description,
         t.device_type,
         t.priority_level,
         t.current_status,
@@ -214,10 +220,42 @@ async function moveTicket(req, res) {
   }
 }
 
+async function getTicketHistory(req, res) {
+  const { ticketNumber } = req.params;
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        e.event_id,
+        e.event_type,
+        e.old_status,
+        e.new_status,
+        e.event_timestamp,
+        tech.name AS technician_name
+      FROM ticket_events e
+      JOIN tickets t
+        ON t.ticket_id = e.ticket_id
+      LEFT JOIN technicians tech
+        ON e.technician_id = tech.technician_id
+      WHERE t.ticket_number = $1
+      ORDER BY e.event_timestamp ASC
+      `,
+      [ticketNumber]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Ticket history error:', err);
+    res.status(500).json({ error: 'Failed to fetch ticket history' });
+  }
+}
+
 module.exports = {
   createTicket,
   searchTickets,
   getTicketByNumber,
   getBoardData,
   moveTicket,
+  getTicketHistory
 };

@@ -12,10 +12,27 @@ function TicketCard({ ticket, type, onStatusChange }) {
       draggable
       onDragStart={handleDragStart}
     >
-      <div><strong>{ticket.ticket_number}</strong></div>
-      <div>{ticket.cust_name}</div>
-      <div>{ticket.issue_summary}</div>
+      <div className="ticketTopRow">
+        <div className="ticketNumber">{ticket.ticket_number}</div>
+        <div
+          className={`priorityBadge priority-${(ticket.priority_level || "Normal")
+            .toLowerCase()
+            .replace(/\s+/g, "-")}`}
+        >
+          {ticket.priority_level || "Normal"}
+        </div>
+      </div>
+
+      <div className="ticketName">{ticket.cust_name}</div>
+
+      <div className="ticketMeta">
+        <span className="ticketDevice">{ticket.device_type || "Unknown Device"}</span>
+      </div>
+
+      <div className="ticketIssue">{ticket.issue_summary}</div>
+
       <select
+        className="statusSelect"
         value={ticket.current_status || "Waiting to Start"}
         onChange={(e) => {
           e.stopPropagation();

@@ -1,42 +1,124 @@
 .ticketCard {
-  padding: 8px;
-  border-radius: 6px;
+  padding: 10px;
+  border-radius: 12px;
   font-size: 0.85rem;
-  background: #caff70;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  background: #1f2937;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   cursor: grab;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ticketCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
+  border-color: #60a5fa;
 }
 
 .ticketCard:active {
   cursor: grabbing;
 }
 
-.ticketCard.actively { background: #b7f397; }
-.ticketCard.resolved { background: #dcdcdc; }
-.ticketCard.new { background: #caff70; }
+.ticketCard.new {
+  border-left: 4px solid #22d3ee;
+}
+
+.ticketCard.actively {
+  border-left: 4px solid #22c55e;
+}
+
+.ticketCard.resolved {
+  border-left: 4px solid #a78bfa;
+  opacity: 0.95;
+}
+
+.ticketTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
 
 .ticketNumber {
-  font-weight: bold;
+  font-weight: 800;
   font-size: 0.75rem;
-  color: #555;
+  color: #93c5fd;
+  letter-spacing: 0.03em;
 }
 
 .ticketName {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
 }
 
+.ticketIssue {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.3;
+}
 
-.ticketCard select {
-  background-color: transparent;
-  border: 2px solid rgba(0,0,0,0.2);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.8rem;
-  color: inherit;
+.ticketMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ticketDevice {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.priorityBadge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.priority-normal {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.priority-high {
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde047;
+  border-color: rgba(250, 204, 21, 0.35);
+}
+
+.priority-urgent {
+  background: rgba(239, 68, 68, 0.14);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.statusSelect {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 0.78rem;
+  color: #f8fafc;
   cursor: pointer;
+  outline: none;
+}
 
-  appearance: none;
+.statusSelect:focus {
+  border-color: #60a5fa;
 }

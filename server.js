@@ -9,20 +9,31 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname,'client')));
-app.use(express.static(path.join(__dirname,'admin_create_token')));
+app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(path.join(__dirname, 'admin_create_token')));
 
-app.post("/login",(req,res)=>{
-  const {username,password}=req.body;
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
 
-  const ADMIN_USER="admin";
-  const ADMIN_PASS="123";
+  const users = [
+    { username: 'admin', password: '123', role: 'admin', displayName: 'Administrator' },
+    { username: 'isaac', password: '123', role: 'employee', displayName: 'Isaac' },
+    { username: 'employee', password: '123', role: 'employee', displayName: 'Employee' }
+  ];
 
-  if(username===ADMIN_USER && password===ADMIN_PASS){
-    res.json({success:true});
-  }else{
-    res.status(401).json({error:"Invalid credentials"});
+  const user = users.find(
+    (u) => u.username === username && u.password === password
+  );
+
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  res.json({
+    success: true,
+    role: user.role,
+    displayName: user.displayName
+  });
 });
 
 app.use('/board', express.static(path.join(__dirname, 'client', 'board-frontend', 'dist')));

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Reports</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: #0b1f3a;
+  color: #f8fafc;
+  padding: 24px;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.back-button,
+.logout-btn {
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #243047;
+  background: #111827;
+  color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover,
+.logout-btn:hover {
+  border-color: #3b82f6;
+  background: #172033;
+}
+
+.branding {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logo {
+  width: 340px;
+  max-width: 90%;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.subtitle {
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+.stat-label {
+  color: #94a3b8;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.panel {
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #243047;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 16px 14px;
+  text-align: left;
+  border-bottom: 1px solid #243047;
+}
+
+th {
+  background: #172033;
+  color: #cbd5e1;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 14px;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.note {
+  margin-top: 16px;
+  color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/home.html" class="back-button">← Back to Dashboard</a>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="branding">
+      <img src="/logo.png" class="logo">
+      <h1>Performance Reports</h1>
+      <div class="subtitle">Technician performance overview</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Jobs Completed This Week</div>
+        <div class="stat-value">18</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Average Completion Time</div>
+        <div class="stat-value">2.4 days</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Open Jobs</div>
+        <div class="stat-value">9</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Most Common Job Type</div>
+        <div class="stat-value">Virus Removal</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Technician Performance</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Technician</th>
+            <th>Jobs Completed</th>
+            <th>Avg Time</th>
+            <th>Active Tickets</th>
+            <th>Common Job</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Isaac</td>
+            <td>7</td>
+            <td>2.1 days</td>
+            <td>4</td>
+            <td>Virus Removal</td>
+          </tr>
+          <tr>
+            <td>Tai</td>
+            <td>6</td>
+            <td>2.8 days</td>
+            <td>3</td>
+            <td>Screen Repair</td>
+          </tr>
+          <tr>
+            <td>Christian</td>
+            <td>5</td>
+            <td>2.3 days</td>
+            <td>2</td>
+            <td>Battery Issues</td>
+          </tr>
+          <tr>
+            <td>Donovan</td>
+            <td>4</td>
+            <td>2.6 days</td>
+            <td>3</td>
+            <td>Data Transfer</td>
+          </tr>
+          <tr>
+            <td>Dakota</td>
+            <td>3</td>
+            <td>2.9 days</td>
+            <td>1</td>
+            <td>Diagnostics</td>
+          </tr>
+          <tr>
+            <td>Josh</td>
+            <td>3</td>
+            <td>2.7 days</td>
+            <td>2</td>
+            <td>OS Install</td>
+          </tr>
+          <tr>
+            <td>David</td>
+            <td>2</td>
+            <td>3.1 days</td>
+            <td>2</td>
+            <td>Hardware Repair</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      Mock data — real analytics will be connected later.
+    </div>
+  </div>
+
+<script>
+function guardAdmin() {
+  if (sessionStorage.getItem("userRole") !== "admin") {
+    window.location.href = "/home.html";
+  }
+}
+
+function logout() {
+  sessionStorage.clear();
+  window.location.href = "/index.html";
+}
+
+guardAdmin();
+</script>
+</body>
+</html>

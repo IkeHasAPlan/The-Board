@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 	ticket_number VARCHAR(50) NOT NULL UNIQUE,
 	cust_name VARCHAR(100) NOT NULL,
 	issue_summary TEXT NOT NULL,
+	device_description TEXT,
 	device_type VARCHAR(100),
 
 	-- Priority is kept for reporting/labeling, not for board ordering

@@ -3,53 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Create Token</title>
+    <title>Create Ticket</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: system-ui, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            min-height: 100vh;
+            background: #0b1f3a;
+            color: #f5f7fa;
+            padding: 24px;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            background: #111827;
+            color: #f8fafc;
+            border: 1px solid #243047;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            border-color: #3b82f6;
+            background: #172033;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .logo-wrap {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 360px;
+            max-width: 90%;
+            height: auto;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #243047;
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            text-align: center;
+            font-size: 34px;
+            color: #ffffff;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin: 0 0 28px 0;
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            background: #1e293b;
+            color: #f8fafc;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="text"]::placeholder,
+        textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 4px;
+            padding: 12px 14px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+        }
+
+        .radio-option,
+        .checkbox-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .radio-option input,
+        .checkbox-option input {
+            accent-color: #3b82f6;
+        }
+
+        .actions {
+            margin-top: 26px;
             display: flex;
             justify-content: center;
         }
-        .container {
-            max-width: 500px;
-            width: 100%;
+
+        .submit-button {
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 12px 28px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
         }
-        h1 {
+
+        .submit-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .status {
+            margin-top: 16px;
             text-align: center;
+            font-weight: 700;
         }
-        label {
-            display: block;
-            margin-top: 12px;
-            font-weight: bold;
+
+        .status.success {
+            color: #4ade80;
         }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 4px;
-            box-sizing: border-box;
+
+        .status.error {
+            color: #f87171;
         }
-        textarea {
-            height: 80px;
-            resize: vertical;
-        }
-        .radio-group {
-            margin-top: 4px;
-        }
-        .radio-group label {
-            display: inline;
-            font-weight: normal;
-            margin-right: 16px;
+
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="/home.html" style="display:block;margin:10px;font-weight:bold;">← Home</a>
-    <div id="root"></div>
+    <div class="page">
+        <div class="topbar">
+            <a href="/home.html" class="back-button">← Back to Dashboard</a>
+        </div>
+
+        <div class="logo-wrap">
+            <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo" />
+        </div>
+
+        <div id="root"></div>
+    </div>
+
     <script type="text/babel">
         function App() {
             const [form, setForm] = React.useState({
@@ -58,14 +236,19 @@
                 workOrder: '',
                 deviceDescription: '',
                 jobDescription: '',
-                deviceType: ''
+                deviceType: '',
+                warranty: false
             });
 
-            function handleChange(e) {
-                setForm({ ...form, [e.target.name]: e.target.value });
-            }
-
             const [status, setStatus] = React.useState(null);
+
+            function handleChange(e) {
+                const { name, value, type, checked } = e.target;
+                setForm({
+                    ...form,
+                    [name]: type === 'checkbox' ? checked : value
+                });
+            }
 
             async function handleSubmit() {
                 setStatus(null);
@@ -76,16 +259,34 @@
                 }
 
                 try {
+                    const payload = {
+                        firstName: form.firstName,
+                        lastName: form.lastName,
+                        workOrder: form.workOrder,
+                        deviceDescription: form.deviceDescription,
+                        jobDescription: form.jobDescription,
+                        deviceType: form.deviceType
+                    };
+
                     const res = await fetch('/tickets', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(form)
+                        body: JSON.stringify(payload)
                     });
+
                     const data = await res.json();
 
                     if (res.ok) {
                         setStatus({ ok: true, text: `Ticket ${data.ticket.ticket_number} submitted!` });
-                        setForm({ firstName: '', lastName: '', workOrder: '', deviceDescription: '', jobDescription: '', deviceType: '' });
+                        setForm({
+                            firstName: '',
+                            lastName: '',
+                            workOrder: '',
+                            deviceDescription: '',
+                            jobDescription: '',
+                            deviceType: '',
+                            warranty: false
+                        });
                     } else {
                         setStatus({ ok: false, text: data.error || 'Something went wrong.' });
                     }
@@ -95,39 +296,130 @@
             }
 
             return (
-                <div className="container">
-                    <h1>Enter the following information...</h1>
+                <div className="card">
+                    <h1>Create Ticket</h1>
+                    <p className="subtitle">Enter the repair details below to create a new work item.</p>
 
-                    <label>First Name</label>
-                    <input type="text" name="firstName" value={form.firstName} onChange={handleChange} />
+                    <div className="form-grid">
+                        <div className="field-group">
+                            <label>First Name</label>
+                            <input
+                                type="text"
+                                name="firstName"
+                                value={form.firstName}
+                                onChange={handleChange}
+                                placeholder="Enter customer's first name"
+                            />
+                        </div>
 
-                    <label>Last Name</label>
-                    <input type="text" name="lastName" value={form.lastName} onChange={handleChange} />
+                        <div className="field-group">
+                            <label>Last Name</label>
+                            <input
+                                type="text"
+                                name="lastName"
+                                value={form.lastName}
+                                onChange={handleChange}
+                                placeholder="Enter customer's last name"
+                            />
+                        </div>
 
-                    <label>Work Order Number</label>
-                    <input type="text" name="workOrder" value={form.workOrder} onChange={handleChange} />
+                        <div className="field-group">
+                            <label>Work Order Number</label>
+                            <input
+                                type="text"
+                                name="workOrder"
+                                value={form.workOrder}
+                                onChange={handleChange}
+                                placeholder="Enter work order number"
+                            />
+                        </div>
 
-                    <label>Device Description</label>
-                    <input type="text" name="deviceDescription" value={form.deviceDescription} onChange={handleChange} />
+                        <div className="field-group">
+                            <label>Device Description</label>
+                            <input
+                                type="text"
+                                name="deviceDescription"
+                                value={form.deviceDescription}
+                                onChange={handleChange}
+                                placeholder="Example: Dell Inspiron 15, black"
+                            />
+                        </div>
 
-                    <label>Brief Description of Job</label>
-                    <textarea name="jobDescription" value={form.jobDescription} onChange={handleChange} />
+                        <div className="field-group full-width">
+                            <label>Brief Description of Job</label>
+                            <textarea
+                                name="jobDescription"
+                                value={form.jobDescription}
+                                onChange={handleChange}
+                                placeholder="Describe the issue or requested repair"
+                            />
+                        </div>
 
-                    <label>Device Type</label>
-                    <div className="radio-group">
-                        <label>
-                            <input type="radio" name="deviceType" value="Laptop" checked={form.deviceType === 'Laptop'} onChange={handleChange} /> Laptop
-                        </label>
-                        <label>
-                            <input type="radio" name="deviceType" value="Desktop" checked={form.deviceType === 'Desktop'} onChange={handleChange} /> Desktop
-                        </label>
-                        <label>
-                            <input type="radio" name="deviceType" value="Other" checked={form.deviceType === 'Other'} onChange={handleChange} /> Other
-                        </label>
+                        <div className="field-group full-width">
+                            <label>Device Type</label>
+                            <div className="radio-group">
+                                <label className="radio-option">
+                                    <input
+                                        type="radio"
+                                        name="deviceType"
+                                        value="Laptop"
+                                        checked={form.deviceType === 'Laptop'}
+                                        onChange={handleChange}
+                                    />
+                                    Laptop
+                                </label>
+
+                                <label className="radio-option">
+                                    <input
+                                        type="radio"
+                                        name="deviceType"
+                                        value="Desktop"
+                                        checked={form.deviceType === 'Desktop'}
+                                        onChange={handleChange}
+                                    />
+                                    Desktop
+                                </label>
+
+                                <label className="radio-option">
+                                    <input
+                                        type="radio"
+                                        name="deviceType"
+                                        value="Other"
+                                        checked={form.deviceType === 'Other'}
+                                        onChange={handleChange}
+                                    />
+                                    Other
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="field-group full-width">
+                            <label>Additional Options</label>
+                            <div className="checkbox-group">
+                                <label className="checkbox-option">
+                                    <input
+                                        type="checkbox"
+                                        name="warranty"
+                                        checked={form.warranty}
+                                        onChange={handleChange}
+                                    />
+                                    Warranty?
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="button" onClick={handleSubmit} style={{marginTop: '20px', padding: '10px 24px', cursor: 'pointer'}}>Submit</button>
-                    {status && <p style={{marginTop: '12px', color: status.ok ? 'green' : 'red', fontWeight: 'bold'}}>{status.text}</p>}
+                    <div className="actions">
+                        <button type="button" className="submit-button" onClick={handleSubmit}>
+                            Submit Ticket
+                        </button>
+                    </div>
+
+                    {status && (
+                        <p className={`status ${status.ok ? 'success' : 'error'}`}>
+                            {status.text}
+                        </p>
+                    )}
                 </div>
             );
         }

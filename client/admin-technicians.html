@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Technicians</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: #0b1f3a;
+  color: #f8fafc;
+  padding: 24px;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.back-button,
+.logout-btn,
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #243047;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.back-button,
+.logout-btn,
+.secondary-btn {
+  background: #111827;
+  color: #f8fafc;
+}
+
+.back-button:hover,
+.logout-btn:hover,
+.secondary-btn:hover {
+  border-color: #3b82f6;
+  background: #172033;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+}
+
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+.danger-btn {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.danger-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.branding {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logo {
+  width: 340px;
+  max-width: 90%;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 36px;
+}
+
+.subtitle {
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.panel {
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 16px 14px;
+  text-align: left;
+  border-bottom: 1px solid #243047;
+}
+
+th {
+  background: #172033;
+  color: #cbd5e1;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge-active {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.action-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note {
+  margin-top: 16px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.5;
+}
+</style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/home.html" class="back-button">← Back to Dashboard</a>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="branding">
+      <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo">
+      <h1>Manage Technicians</h1>
+      <div class="subtitle">Admin panel mockup for technician management.</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">Technician Directory</div>
+      <button class="primary-btn">+ Add Technician</button>
+    </div>
+
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Assigned Tickets</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Isaac</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>4</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Tai</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>3</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Christian</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Donovan</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>3</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Dakota</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>1</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>Josh</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>David</td>
+              <td>Technician</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2</td>
+              <td>
+                <div class="action-group">
+                  <button class="secondary-btn">Edit</button>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="note">
+      This page is a front-end mockup. Technician controls will be connected to the database in the next phase.
+    </div>
+  </div>
+
+<script>
+function guardAdmin() {
+  const role = sessionStorage.getItem("userRole");
+  if (role !== "admin") {
+    window.location.href = "/home.html";
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem("userRole");
+  sessionStorage.removeItem("displayName");
+  window.location.href = "/index.html";
+}
+
+guardAdmin();
+</script>
+</body>
+</html>

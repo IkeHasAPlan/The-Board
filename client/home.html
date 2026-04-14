@@ -2,43 +2,158 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>The Board</title>
+<title>Dashboard</title>
 
 <style>
-body{
-  font-family: system-ui, Arial;
-  background:#f5f5f5;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  margin:0;
+* {
+  box-sizing: border-box;
 }
 
-.container{
-  background:white;
-  padding:40px;
-  border:3px solid black;
-  width:400px;
-  text-align:center;
+body {
+  font-family: system-ui, Arial, sans-serif;
+  background: #0b1f3a;
+  margin: 0;
+  color: #f5f7fa;
 }
 
-h1{
-  margin-bottom:30px;
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 32px 20px 40px;
+  text-align: center;
 }
 
-.button{
-  display:block;
-  margin:15px 0;
-  padding:15px;
-  border:2px solid black;
-  text-decoration:none;
-  color:black;
-  font-weight:bold;
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.button:hover{
-  background:#eaeaea;
+.user-pill {
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: #cbd5f5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background: #111827;
+  border: 1px solid #243047;
+  color: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  border-color: #3b82f6;
+  background: #172033;
+}
+
+.logo {
+  width: 380px;
+  max-width: 90%;
+  margin-bottom: 10px;
+}
+
+.app-title {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 25px;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.section-title {
+  font-size: 22px;
+  margin-bottom: 25px;
+  font-weight: 500;
+  color: #cbd5f5;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.employee-row {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.admin-row {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.card {
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 16px;
+  padding: 30px 20px;
+  width: 230px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: #3b82f6;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.card h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.card p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.admin-card {
+  border-color: #3b82f6;
+}
+
+.admin-label {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .admin-row {
+    gap: 25px;
+  }
 }
 </style>
 </head>
@@ -46,19 +161,93 @@ h1{
 <body>
 
 <div class="container">
-  <h1>The Board</h1>
+  <div class="topbar">
+    <div id="userInfo" class="user-pill">Signed in</div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
 
-  <a class="button" href="/act.html">
-    Create Ticket
-  </a>
+  <img src="/logo.png" alt="Columbia Computer Center" class="logo">
 
-  <a class="button" href="/AdminSearch.html">
-    Search Tickets
-  </a>
-  <a class="button" href="/board">
-    Board
-  </a>
+  <div class="app-title">The Board</div>
+  <div class="section-title">What would you like to do?</div>
+
+  <div class="actions">
+    <div class="employee-row" id="employeeActions">
+      <a href="/act.html">
+        <div class="card">
+          <h3>Create Ticket</h3>
+          <p>Start a new repair job</p>
+        </div>
+      </a>
+
+      <a href="/AdminSearch.html">
+        <div class="card">
+          <h3>Search Tickets</h3>
+          <p>Find existing jobs</p>
+        </div>
+      </a>
+
+      <a href="/board">
+        <div class="card">
+          <h3>Open Board</h3>
+          <p>View workflow system</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="admin-row" id="adminActions"></div>
+  </div>
 </div>
+
+<script>
+function logout() {
+  sessionStorage.removeItem("userRole");
+  sessionStorage.removeItem("displayName");
+  window.location.href = "/index.html";
+}
+
+function requireLogin() {
+  const role = sessionStorage.getItem("userRole");
+  if (!role) {
+    window.location.href = "/index.html";
+    return null;
+  }
+  return role;
+}
+
+function injectAdminCards() {
+  const role = requireLogin();
+  if (!role) return;
+
+  const displayName = sessionStorage.getItem("displayName") || "User";
+  const userInfo = document.getElementById("userInfo");
+  userInfo.textContent = `${displayName} • ${role}`;
+
+  if (role !== "admin") return;
+
+  const adminRow = document.getElementById("adminActions");
+
+  adminRow.innerHTML = `
+    <a href="/admin-technicians.html">
+      <div class="card admin-card">
+        <div class="admin-label">ADMIN</div>
+        <h3>Manage Technicians</h3>
+        <p>Add, edit, or deactivate technicians</p>
+      </div>
+    </a>
+
+    <a href="/admin-reports.html">
+      <div class="card admin-card">
+        <div class="admin-label">ADMIN</div>
+        <h3>Performance Reports</h3>
+        <p>Review technician stats and weekly output</p>
+      </div>
+    </a>
+  `;
+}
+
+injectAdminCards();
+</script>
 
 </body>
 </html>

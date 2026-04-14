@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VZsBn7t6vKx3TlDUTqFP6swistnAMBhtmou1dnrB3ynru4Ickvahim7eqCU2OEg
+\restrict pMGBjpKOyUsPz7Tg5pu0VRIHYPjgSQBB9rVUw9p8R4BvalDr2oOqhBYgBmHOGea
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -172,12 +172,13 @@ ALTER TABLE ONLY public.tickets ALTER COLUMN ticket_id SET DEFAULT nextval('publ
 --
 
 COPY public.technicians (technician_id, name, email, created_at) FROM stdin;
-1	Christian	isaac@board.com	2026-03-12 14:42:51.258339
-2	Tai	tai@board.com	2026-03-12 14:42:51.258339
-3	Dakota	dakota@board.com	2026-03-12 14:42:51.258339
-5	Donovan	donovan@board.com	2026-03-12 14:42:51.258339
-6	Josh	josh@board.com	2026-03-12 14:42:51.258339
-7	David	david@board.com	2026-03-12 14:42:51.258339
+1	Christian	christian@board.com	2026-04-02 18:27:51.168761
+2	Tai	tai@board.com	2026-04-02 18:27:51.168761
+3	Dakota	dakota@board.com	2026-04-02 18:27:51.168761
+4	Isaac	isaac@board.com	2026-04-02 18:27:51.168761
+5	Donovan	donovan@board.com	2026-04-02 18:27:51.168761
+6	Josh	josh@board.com	2026-04-02 18:27:51.168761
+7	David	david@board.com	2026-04-02 18:27:51.168761
 \.
 
 
@@ -194,13 +195,13 @@ COPY public.ticket_events (event_id, ticket_id, event_type, old_status, new_stat
 --
 
 COPY public.tickets (ticket_id, ticket_number, cust_name, issue_summary, device_type, priority_level, current_status, assigned_technician_id, created_at, started_at, completed_at, updated_at, sort_order) FROM stdin;
-1	T2001	Taco Bell	Screen replacement	Laptop	High	Waiting to Start	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	1000
-2	T2002	Professor X	Virus removal	Desktop	Normal	Waiting to Start	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	1000
-3	T2003	Toronto Raptors	Battery not charging	Laptop	Urgent	In Progress	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	0
-4	T2004	Lu Lee	OS reinstall	Desktop	Normal	Waiting for Customer Response	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	1000
-5	T2005	Iron Man	Keyboard replacement (parts pending)	Laptop	Normal	Waiting for Part	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	1000
-6	T2006	Joohn Ceeena	Data transfer	Laptop	Normal	In Progress	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	0
-7	T2007	Daft Punk	Device running slow	Desktop	Low	Waiting to Start	\N	2026-03-12 14:41:51.657255	\N	\N	2026-03-12 14:41:51.657255	1000
+1	T2001	Taco Bell	Screen replacement	Laptop	High	Waiting to Start	\N	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	1000
+2	T2002	Professor X	Virus removal	Desktop	Normal	Waiting to Start	\N	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	1000
+3	T2003	Toronto Raptors	Battery not charging	Laptop	Urgent	In Progress	2	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	0
+4	T2004	Lu Lee	OS reinstall	Desktop	Normal	Waiting for Customer Response	2	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	1000
+5	T2005	Iron Man	Keyboard replacement (parts pending)	Laptop	Normal	Waiting for Part	2	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	1000
+6	T2006	Joohn Ceeena	Data transfer	Laptop	Normal	Waiting for Part	\N	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	0
+7	T2007	Daft Punk	Device running slow	Desktop	Low	Done	\N	2026-04-02 18:27:51.174315	\N	\N	2026-04-02 18:27:51.174315	1000
 \.
 
 
@@ -222,7 +223,7 @@ SELECT pg_catalog.setval('public.ticket_events_event_id_seq', 1, false);
 -- Name: tickets_ticket_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 14, true);
+SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 7, true);
 
 
 --
@@ -349,5 +350,5 @@ ALTER TABLE ONLY public.ticket_events
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VZsBn7t6vKx3TlDUTqFP6swistnAMBhtmou1dnrB3ynru4Ickvahim7eqCU2OEg
+\unrestrict pMGBjpKOyUsPz7Tg5pu0VRIHYPjgSQBB9rVUw9p8R4BvalDr2oOqhBYgBmHOGea
 
