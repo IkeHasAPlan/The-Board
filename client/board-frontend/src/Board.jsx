@@ -219,24 +219,21 @@ function Board() {
         newTickets,
         resolvedTickets
     );
-    if(newStatus === "Done") {
-      setResolvedTickets([...newResolved, updatedTicket]);
-    }
-    else if( newStatus === "Waiting to Start" || !updatedTicket.technician_name){
-      console.log("Adding to new tickets:", updatedTicket);
-      console.log("Current newNew:", newNew);
-      setNewTickets([...newNew, updatedTicket]);
-    }
-    else {
-      const next = structuredClone(newData);
-      next[updatedTicket.technician_name].actively.push(updatedTicket);
-      setTicketData(next);
+
+    const next = structuredClone(newData);
+
+
+    if (!updatedTicket.technician_name) {
+    setNewTickets([...newTickets, updatedTicket]);
+    } else {
+    next[updatedTicket.technician_name].actively.push(updatedTicket);
+    setTicketData(next);
     }
 
     try{
       await persistMove(ticket.ticket_id, {
         currentStatus: newStatus,
-        assignedTechnicianId: newStatus === "Waiting to Start" ? null : undefined,
+        assignedTechnicianId: undefined,
       });
     }
     catch(err){

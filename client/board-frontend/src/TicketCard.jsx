@@ -40,11 +40,9 @@ function TicketCard({ ticket, type, onStatusChange }) {
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <option value="Waiting to Start">Waiting to Start</option>
         <option value="In Progress">In Progress</option>
         <option value="Waiting for Customer Response">Waiting for Customer</option>
         <option value="Waiting for Part">Waiting for Part</option>
-        <option value="Done">Done</option>
       </select>
     </div>
   );
