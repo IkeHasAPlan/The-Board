@@ -4,11 +4,13 @@
 --
 
 -- Technicians 
-CREATE TABLE IF NOT EXISTS technicians (
-	technician_id SERIAL PRIMARY KEY, 
-	name VARCHAR(100) NOT NULL,
-	email VARCHAR(100) UNIQUE NOT NULL,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE technicians (
+  technician_id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tickets - stored tickets to admin
