@@ -125,9 +125,10 @@ async function getTicketByNumber(req, res) {
 }
 async function getBoardData(req, res) {
   try {
-    const techniciansResult = await pool.query(`
+     const techniciansResult = await pool.query(`
       SELECT technician_id, name, email
       FROM technicians
+      WHERE is_active = TRUE
       ORDER BY technician_id ASC
     `);
 
