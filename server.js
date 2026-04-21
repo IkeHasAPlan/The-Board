@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const ticketRoutes = require('./routes/TicketRoutes');
+const technicianRoutes = require('./routes/TechnicianRoutes');
 
 const app = express();
 const PORT = 3001;
@@ -43,10 +44,10 @@ app.get('/board', (req, res) => {
 });
 
 app.use('/tickets', ticketRoutes);
+app.use('/technicians', technicianRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
 const technicianRoutes = require('./routes/TechnicianRoutes');
 app.use('/technicians', technicianRoutes);
