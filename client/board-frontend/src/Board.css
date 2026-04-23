@@ -48,7 +48,9 @@ body,
   border: 1px solid #334155;
   border-radius: 16px;
   padding: 10px;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /*Change the first number to change how many Columns */
+  align-content: start;
   flex-direction: column;
   justify-content: flex-start;
   gap: 10px;
@@ -81,6 +83,7 @@ body,
 .cell:empty::after {
   content: "Drop tickets here";
   display: flex;
+  grid-column: 1 / -1;
   align-items: center;
   justify-content: center;
   min-height: 100px;
