@@ -143,6 +143,24 @@ tr:last-child td {
   margin-top: 16px;
   color: #94a3b8;
 }
+
+.status-message {
+  margin-top: 12px;
+  min-height: 20px;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>
 
@@ -154,7 +172,7 @@ tr:last-child td {
     </div>
 
     <div class="branding">
-      <img src="/logo.png" class="logo">
+      <img src="/logo.png" class="logo" alt="Columbia Computer Center Logo">
       <h1>Performance Reports</h1>
       <div class="subtitle">Technician performance overview</div>
     </div>
@@ -162,22 +180,22 @@ tr:last-child td {
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Jobs Completed This Week</div>
-        <div class="stat-value">18</div>
+        <div class="stat-value" id="jobsCompletedValue">--</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-label">Average Completion Time</div>
-        <div class="stat-value">2.4 days</div>
+        <div class="stat-value" id="avgCompletionValue">--</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-label">Open Jobs</div>
-        <div class="stat-value">9</div>
+        <div class="stat-value" id="openJobsValue">--</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-label">Most Common Job Type</div>
-        <div class="stat-value">Virus Removal</div>
+        <div class="stat-value" id="commonJobValue">--</div>
       </div>
     </div>
 
@@ -193,62 +211,18 @@ tr:last-child td {
             <th>Common Job</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="technicianPerformanceBody">
           <tr>
-            <td>Isaac</td>
-            <td>7</td>
-            <td>2.1 days</td>
-            <td>4</td>
-            <td>Virus Removal</td>
-          </tr>
-          <tr>
-            <td>Tai</td>
-            <td>6</td>
-            <td>2.8 days</td>
-            <td>3</td>
-            <td>Screen Repair</td>
-          </tr>
-          <tr>
-            <td>Christian</td>
-            <td>5</td>
-            <td>2.3 days</td>
-            <td>2</td>
-            <td>Battery Issues</td>
-          </tr>
-          <tr>
-            <td>Donovan</td>
-            <td>4</td>
-            <td>2.6 days</td>
-            <td>3</td>
-            <td>Data Transfer</td>
-          </tr>
-          <tr>
-            <td>Dakota</td>
-            <td>3</td>
-            <td>2.9 days</td>
-            <td>1</td>
-            <td>Diagnostics</td>
-          </tr>
-          <tr>
-            <td>Josh</td>
-            <td>3</td>
-            <td>2.7 days</td>
-            <td>2</td>
-            <td>OS Install</td>
-          </tr>
-          <tr>
-            <td>David</td>
-            <td>2</td>
-            <td>3.1 days</td>
-            <td>2</td>
-            <td>Hardware Repair</td>
+            <td colspan="5">Loading report data...</td>
           </tr>
         </tbody>
       </table>
     </div>
 
+    <div id="statusMessage" class="status-message"></div>
+
     <div class="note">
-      Mock data — real analytics will be connected later.
+      This page shows overall shop throughput at the top and technician-level workload and turnaround data below.
     </div>
   </div>
 
@@ -264,7 +238,69 @@ function logout() {
   window.location.href = "/index.html";
 }
 
+function setStatus(message, isError = false) {
+  const statusEl = document.getElementById("statusMessage");
+  statusEl.textContent = message;
+  statusEl.style.color = isError ? "#f87171" : "#4ade80";
+}
+
+async function loadSummary() {
+  try {
+    const res = await fetch('/reports/summary');
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to load summary.');
+    }
+
+    document.getElementById('jobsCompletedValue').textContent = data.jobsCompletedThisWeek ?? '--';
+    document.getElementById('avgCompletionValue').textContent =
+      data.avgCompletionDays !== null && data.avgCompletionDays !== undefined
+        ? `${data.avgCompletionDays} days`
+        : '--';
+    document.getElementById('openJobsValue').textContent = data.openJobs ?? '--';
+    document.getElementById('commonJobValue').textContent = data.mostCommonJobType || '--';
+  } catch (err) {
+    console.error(err);
+    setStatus(err.message || 'Failed to load summary.', true);
+  }
+}
+
+async function loadTechnicianPerformance() {
+  const body = document.getElementById('technicianPerformanceBody');
+
+  try {
+    const res = await fetch('/reports/technicians');
+    const rows = await res.json();
+
+    if (!res.ok) {
+      throw new Error(rows.error || 'Failed to load technician performance.');
+    }
+
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="5">No report data available.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = rows.map(row => `
+      <tr>
+        <td>${row.technician || 'Unassigned'}</td>
+        <td>${row.jobs_completed ?? 0}</td>
+        <td>${row.avg_time !== null && row.avg_time !== undefined ? `${row.avg_time} days` : '--'}</td>
+        <td>${row.active_tickets ?? 0}</td>
+        <td>${row.common_job || '--'}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    body.innerHTML = '<tr><td colspan="5">Failed to load technician performance.</td></tr>';
+    setStatus(err.message || 'Failed to load technician performance.', true);
+  }
+}
+
 guardAdmin();
+loadSummary();
+loadTechnicianPerformance();
 </script>
 </body>
 </html>
