@@ -10,7 +10,7 @@
   box-sizing: border-box;
 }
 
-body {
+body  {
   margin: 0;
   font-family: system-ui, Arial, sans-serif;
   background: #0b1f3a;
@@ -172,6 +172,12 @@ tr:last-child td {
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
+.badge-inactive {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
 .action-group {
   display: flex;
   gap: 8px;
@@ -183,6 +189,72 @@ tr:last-child td {
   color: #94a3b8;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.status-message {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 20px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.7);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 500px;
+  background: #111827;
+  border: 1px solid #243047;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.modal-card h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.field-group {
+  margin-bottom: 16px;
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.field-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 15px;
+  outline: none;
+}
+
+.field-group input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
 }
 </style>
 </head>
@@ -197,12 +269,12 @@ tr:last-child td {
     <div class="branding">
       <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo">
       <h1>Manage Technicians</h1>
-      <div class="subtitle">Admin panel mockup for technician management.</div>
+      <div class="subtitle">Admin panel for technician management.</div>
     </div>
 
     <div class="toolbar">
       <div class="toolbar-left">Technician Directory</div>
-      <button class="primary-btn">+ Add Technician</button>
+      <button class="primary-btn" onclick="openAddModal()">+ Add Technician</button>
     </div>
 
     <div class="panel">
@@ -217,109 +289,46 @@ tr:last-child td {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="technicianTableBody">
             <tr>
-              <td>Isaac</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>4</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
+              <td colspan="5">Loading technicians...</td>
             </tr>
-
-            <tr>
-              <td>Tai</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>3</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Christian</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Donovan</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>3</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Dakota</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>1</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Josh</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>David</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
           </tbody>
         </table>
       </div>
     </div>
 
+    <div id="statusMessage" class="status-message"></div>
+
     <div class="note">
-      This page is a front-end mockup. Technician controls will be connected to the database in the next phase.
+      Active technicians appear on the board. Deactivated technicians stay in the database but are removed from active use.
+    </div>
+  </div>
+
+  <div id="technicianModal" class="modal">
+    <div class="modal-card">
+      <h2 id="modalTitle">Add Technician</h2>
+
+      <div class="field-group">
+        <label for="techName">Name</label>
+        <input id="techName" type="text" placeholder="Enter technician name">
+      </div>
+
+      <div class="field-group">
+        <label for="techEmail">Email</label>
+        <input id="techEmail" type="email" placeholder="Enter technician email">
+      </div>
+
+      <div class="modal-actions">
+        <button class="secondary-btn" onclick="closeModal()">Cancel</button>
+        <button class="primary-btn" onclick="submitTechnician()">Save</button>
+      </div>
     </div>
   </div>
 
 <script>
+let editingTechnicianId = null;
+
 function guardAdmin() {
   const role = sessionStorage.getItem("userRole");
   if (role !== "admin") {
@@ -333,7 +342,171 @@ function logout() {
   window.location.href = "/index.html";
 }
 
+function setStatus(message, isError = false) {
+  const statusEl = document.getElementById("statusMessage");
+  statusEl.textContent = message;
+  statusEl.style.color = isError ? "#f87171" : "#4ade80";
+}
+
+function clearStatus() {
+  const statusEl = document.getElementById("statusMessage");
+  statusEl.textContent = "";
+}
+
+function openAddModal() {
+  editingTechnicianId = null;
+  document.getElementById("modalTitle").textContent = "Add Technician";
+  document.getElementById("techName").value = "";
+  document.getElementById("techEmail").value = "";
+  document.getElementById("technicianModal").style.display = "flex";
+}
+
+function openEditModal(id, name, email) {
+  editingTechnicianId = id;
+  document.getElementById("modalTitle").textContent = "Edit Technician";
+  document.getElementById("techName").value = name;
+  document.getElementById("techEmail").value = email;
+  document.getElementById("technicianModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("technicianModal").style.display = "none";
+}
+
+function escapeQuotes(value) {
+  return String(value).replace(/'/g, "\\'");
+}
+
+async function loadTechnicians() {
+  const tableBody = document.getElementById("technicianTableBody");
+
+  try {
+    const res = await fetch('/technicians');
+    const technicians = await res.json();
+
+    if (!res.ok) {
+      throw new Error(technicians.error || 'Failed to load technicians');
+    }
+
+    if (!technicians.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5">No technicians found.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = technicians.map(tech => `
+      <tr>
+        <td>${tech.name}</td>
+        <td>Technician</td>
+        <td>
+          <span class="badge ${tech.is_active ? 'badge-active' : 'badge-inactive'}">
+            ${tech.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </td>
+        <td>${tech.assigned_tickets}</td>
+        <td>
+          <div class="action-group">
+            <button
+              class="secondary-btn"
+              onclick="openEditModal(${tech.technician_id}, '${escapeQuotes(tech.name)}', '${escapeQuotes(tech.email)}')"
+              ${!tech.is_active ? 'disabled' : ''}
+            >
+              Edit
+            </button>
+            <button
+              class="danger-btn"
+              onclick="deactivateTechnician(${tech.technician_id}, '${escapeQuotes(tech.name)}')"
+              ${!tech.is_active ? 'disabled' : ''}
+            >
+              Deactivate
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5">Failed to load technicians.</td>
+      </tr>
+    `;
+    setStatus(err.message || 'Failed to load technicians.', true);
+  }
+}
+
+async function submitTechnician() {
+  clearStatus();
+
+  const name = document.getElementById("techName").value.trim();
+  const email = document.getElementById("techEmail").value.trim();
+
+  if (!name || !email) {
+    setStatus('Name and email are required.', true);
+    return;
+  }
+
+  try {
+    const url = editingTechnicianId ? `/technicians/${editingTechnicianId}` : '/technicians';
+    const method = editingTechnicianId ? 'PATCH' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Save failed.');
+    }
+
+    closeModal();
+    setStatus(editingTechnicianId ? 'Technician updated successfully.' : 'Technician added successfully.');
+    loadTechnicians();
+  } catch (err) {
+    console.error(err);
+    setStatus(err.message || 'Save failed.', true);
+  }
+}
+
+async function deactivateTechnician(id, name) {
+  clearStatus();
+
+  const confirmed = confirm(`Deactivate ${name}? Open tickets assigned to them will become unassigned.`);
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/technicians/${id}/deactivate`, {
+      method: 'PATCH'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Deactivate failed.');
+    }
+
+    setStatus('Technician deactivated successfully.');
+    loadTechnicians();
+  } catch (err) {
+    console.error(err);
+    setStatus(err.message || 'Deactivate failed.', true);
+  }
+}
+
+document.getElementById("technicianModal").addEventListener("click", (e) => {
+  if (e.target.id === "technicianModal") {
+    closeModal();
+  }
+});
+
 guardAdmin();
+loadTechnicians();
 </script>
 </body>
 </html>
