@@ -1,51 +1,54 @@
 const pool = require('../db');
 
+function formatNumber(value, fallback = 0) {
+  if (value === null || value === undefined) return fallback;
+  return Number(value);
+}
+
 async function getReportSummary(req, res) {
   try {
-    const jobsCompletedQuery = `
-      SELECT COUNT(*) AS jobs_completed_this_week
-      FROM tickets
-      WHERE current_status = 'Done'
-        AND completed_at >= date_trunc('week', CURRENT_DATE)
-    `;
+    const result = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (
+          WHERE current_status = 'Done'
+            AND completed_at >= date_trunc('week', CURRENT_DATE)
+        ) AS jobs_completed_this_week,
 
-    const avgCompletionQuery = `
-      SELECT ROUND(
-        AVG(EXTRACT(EPOCH FROM (completed_at - created_at)) / 86400)::numeric,
-        1
-      ) AS avg_completion_days
-      FROM tickets
-      WHERE completed_at IS NOT NULL
-    `;
+        ROUND(
+          AVG(
+            CASE
+              WHEN started_at IS NOT NULL AND completed_at IS NOT NULL
+              THEN EXTRACT(EPOCH FROM (completed_at - started_at)) / 3600 / 8
+              ELSE NULL
+            END
+          )::numeric,
+          1
+        ) AS avg_completion_days,
 
-    const openJobsQuery = `
-      SELECT COUNT(*) AS open_jobs
-      FROM tickets
-      WHERE current_status <> 'Done'
-    `;
+        COUNT(*) FILTER (
+          WHERE current_status <> 'Done'
+            AND COALESCE(is_archived, FALSE) = FALSE
+        ) AS open_jobs
+      FROM tickets;
+    `);
 
-    const mostCommonJobQuery = `
-      SELECT device_type, COUNT(*) AS total
+    const commonJobResult = await pool.query(`
+      SELECT issue_summary, COUNT(*) AS total
       FROM tickets
-      WHERE device_type IS NOT NULL
-      GROUP BY device_type
-      ORDER BY total DESC, device_type ASC
-      LIMIT 1
-    `;
+      WHERE issue_summary IS NOT NULL
+        AND TRIM(issue_summary) <> ''
+      GROUP BY issue_summary
+      ORDER BY total DESC, issue_summary ASC
+      LIMIT 1;
+    `);
 
-    const [jobsCompletedResult, avgCompletionResult, openJobsResult, mostCommonJobResult] =
-      await Promise.all([
-        pool.query(jobsCompletedQuery),
-        pool.query(avgCompletionQuery),
-        pool.query(openJobsQuery),
-        pool.query(mostCommonJobQuery)
-      ]);
+    const row = result.rows[0];
 
     res.json({
-      jobsCompletedThisWeek: Number(jobsCompletedResult.rows[0]?.jobs_completed_this_week || 0),
-      avgCompletionDays: avgCompletionResult.rows[0]?.avg_completion_days || null,
-      openJobs: Number(openJobsResult.rows[0]?.open_jobs || 0),
-      mostCommonJobType: mostCommonJobResult.rows[0]?.device_type || 'N/A'
+      jobsCompletedThisWeek: formatNumber(row.jobs_completed_this_week),
+      avgCompletionDays: row.avg_completion_days === null ? null : Number(row.avg_completion_days),
+      openJobs: formatNumber(row.open_jobs),
+      mostCommonJobType: commonJobResult.rows[0]?.issue_summary || 'N/A'
     });
   } catch (err) {
     console.error('Get report summary error:', err);
@@ -55,35 +58,51 @@ async function getReportSummary(req, res) {
 
 async function getTechnicianPerformance(req, res) {
   try {
-    const query = `
+    const result = await pool.query(`
       SELECT
         tech.technician_id,
         tech.name AS technician,
-        COUNT(t.ticket_id) FILTER (WHERE t.current_status = 'Done') AS jobs_completed,
+
+        COUNT(t.ticket_id) FILTER (
+          WHERE t.current_status = 'Done'
+            AND t.completed_at >= date_trunc('week', CURRENT_DATE)
+        ) AS jobs_completed,
+
         ROUND(
           AVG(
-            EXTRACT(EPOCH FROM (t.completed_at - t.created_at)) / 86400
-          ) FILTER (WHERE t.completed_at IS NOT NULL)::numeric,
+            CASE
+              WHEN t.started_at IS NOT NULL AND t.completed_at IS NOT NULL
+              THEN EXTRACT(EPOCH FROM (t.completed_at - t.started_at)) / 3600 / 8
+              ELSE NULL
+            END
+          )::numeric,
           1
         ) AS avg_time,
-        COUNT(t.ticket_id) FILTER (WHERE t.current_status <> 'Done') AS active_tickets,
+
+        COUNT(t.ticket_id) FILTER (
+          WHERE t.current_status <> 'Done'
+            AND COALESCE(t.is_archived, FALSE) = FALSE
+        ) AS active_tickets,
+
         (
-          SELECT t2.device_type
+          SELECT t2.issue_summary
           FROM tickets t2
           WHERE t2.assigned_technician_id = tech.technician_id
-            AND t2.device_type IS NOT NULL
-          GROUP BY t2.device_type
-          ORDER BY COUNT(*) DESC, t2.device_type ASC
+            AND t2.issue_summary IS NOT NULL
+            AND TRIM(t2.issue_summary) <> ''
+          GROUP BY t2.issue_summary
+          ORDER BY COUNT(*) DESC, t2.issue_summary ASC
           LIMIT 1
         ) AS common_job
+
       FROM technicians tech
       LEFT JOIN tickets t
         ON tech.technician_id = t.assigned_technician_id
+      WHERE tech.is_active = TRUE
       GROUP BY tech.technician_id, tech.name
-      ORDER BY jobs_completed DESC, tech.name ASC
-    `;
+      ORDER BY tech.technician_id ASC;
+    `);
 
-    const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error('Get technician performance error:', err);

@@ -81,6 +81,11 @@ body {
   background: rgba(239, 68, 68, 0.2);
 }
 
+.danger-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .branding {
   text-align: center;
   margin-bottom: 24px;
@@ -172,17 +177,32 @@ tr:last-child td {
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
+.badge-inactive {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
 .action-group {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.note {
+.note,
+.status-message {
   margin-top: 16px;
   color: #94a3b8;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.status-message.success {
+  color: #86efac;
+}
+
+.status-message.error {
+  color: #fca5a5;
 }
 </style>
 </head>
@@ -197,12 +217,12 @@ tr:last-child td {
     <div class="branding">
       <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo">
       <h1>Manage Technicians</h1>
-      <div class="subtitle">Admin panel mockup for technician management.</div>
+      <div class="subtitle">Add, edit, reactivate, or deactivate board technicians.</div>
     </div>
 
     <div class="toolbar">
       <div class="toolbar-left">Technician Directory</div>
-      <button class="primary-btn">+ Add Technician</button>
+      <button class="primary-btn" onclick="addTechnician()">+ Add Technician</button>
     </div>
 
     <div class="panel">
@@ -217,105 +237,19 @@ tr:last-child td {
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="technicianTableBody">
             <tr>
-              <td>Isaac</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>4</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
+              <td colspan="5">Loading technicians...</td>
             </tr>
-
-            <tr>
-              <td>Tai</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>3</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Christian</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Donovan</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>3</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Dakota</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>1</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>Josh</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td>David</td>
-              <td>Technician</td>
-              <td><span class="badge badge-active">Active</span></td>
-              <td>2</td>
-              <td>
-                <div class="action-group">
-                  <button class="secondary-btn">Edit</button>
-                  <button class="danger-btn">Deactivate</button>
-                </div>
-              </td>
-            </tr>
-
           </tbody>
         </table>
       </div>
     </div>
 
+    <div id="statusMessage" class="status-message"></div>
+
     <div class="note">
-      This page is a front-end mockup. Technician controls will be connected to the database in the next phase.
+      Editing an inactive technician lets you reactivate them. Active technicians appear as columns on the board.
     </div>
   </div>
 
@@ -333,7 +267,171 @@ function logout() {
   window.location.href = "/index.html";
 }
 
+function setMessage(text, type = "") {
+  const el = document.getElementById("statusMessage");
+  el.textContent = text;
+  el.className = `status-message ${type}`;
+}
+
+function escapeForOnClick(value) {
+  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function loadTechnicians() {
+  const body = document.getElementById("technicianTableBody");
+
+  try {
+    const res = await fetch("/technicians");
+    const technicians = await res.json();
+
+    if (!res.ok) {
+      throw new Error(technicians.error || "Failed to load technicians.");
+    }
+
+    if (!technicians.length) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="5">No technicians found.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    body.innerHTML = technicians.map((tech) => `
+      <tr>
+        <td>${tech.name}</td>
+        <td>Technician</td>
+        <td>
+          <span class="badge ${tech.is_active ? "badge-active" : "badge-inactive"}">
+            ${tech.is_active ? "Active" : "Inactive"}
+          </span>
+        </td>
+        <td>${tech.assigned_tickets ?? 0}</td>
+        <td>
+          <div class="action-group">
+            <button
+              class="secondary-btn"
+              onclick="editTechnician(${tech.technician_id}, '${escapeForOnClick(tech.name)}', ${tech.is_active})"
+            >
+              Edit
+            </button>
+
+            <button
+              class="danger-btn"
+              ${tech.is_active ? "" : "disabled"}
+              onclick="deactivateTechnician(${tech.technician_id}, '${escapeForOnClick(tech.name)}', ${tech.assigned_tickets ?? 0})"
+            >
+              Deactivate
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.error(err);
+    body.innerHTML = `
+      <tr>
+        <td colspan="5">Failed to load technicians.</td>
+      </tr>
+    `;
+  }
+}
+
+async function addTechnician() {
+  const name = window.prompt("Enter technician name:");
+
+  if (!name || !name.trim()) return;
+
+  try {
+    const res = await fetch("/technicians", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name: name.trim() })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to add technician.");
+    }
+
+    setMessage(`${name.trim()} added successfully. Their column will appear on the board.`, "success");
+    await loadTechnicians();
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Failed to add technician.", "error");
+  }
+}
+
+async function editTechnician(id, currentName, isActive) {
+  const newName = window.prompt("Edit technician name:", currentName);
+
+  if (!newName || !newName.trim()) return;
+
+  let shouldReactivate = false;
+
+  if (!isActive) {
+    shouldReactivate = window.confirm(
+      `${currentName} is currently inactive.\n\nDo you want to reactivate them and restore their board column?`
+    );
+  }
+
+  try {
+    const res = await fetch(`/technicians/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: newName.trim(),
+        isActive: shouldReactivate ? true : undefined
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to update technician.");
+    }
+
+    setMessage(`${newName.trim()} updated successfully.`, "success");
+    await loadTechnicians();
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Failed to update technician.", "error");
+  }
+}
+
+async function deactivateTechnician(id, name, assignedTickets) {
+  const confirmed = window.confirm(
+    `Deactivate ${name}?\n\nThis will remove their column from the board and move ${assignedTickets || 0} active ticket(s) back to Waiting to Start.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/technicians/${id}/deactivate`, {
+      method: "PATCH"
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to deactivate technician.");
+    }
+
+    setMessage(data.message || `${name} deactivated.`, "success");
+    await loadTechnicians();
+  } catch (err) {
+    console.error(err);
+    setMessage(err.message || "Failed to deactivate technician.", "error");
+  }
+}
+
 guardAdmin();
+loadTechnicians();
 </script>
 </body>
 </html>

@@ -55,6 +55,7 @@ async function searchTickets(req, res) {
       SELECT 
         t.ticket_id,
         t.ticket_number,
+        t.sub_status,
         t.cust_name,
         t.issue_summary,
         t.device_description,
@@ -69,10 +70,13 @@ async function searchTickets(req, res) {
       LEFT JOIN technicians tech
         ON t.assigned_technician_id = tech.technician_id
       WHERE
-        t.ticket_number ILIKE $1 OR
-        t.cust_name ILIKE $1 OR
-        t.issue_summary ILIKE $1 OR
-        t.device_type ILIKE $1
+        COALESCE(t.is_archived, FALSE) = FALSE
+        AND (
+          t.ticket_number ILIKE $1 OR
+          t.cust_name ILIKE $1 OR
+          t.issue_summary ILIKE $1 OR
+          t.device_type ILIKE $1
+        )
       ORDER BY t.updated_at DESC
       LIMIT 25
       `,
@@ -96,6 +100,7 @@ async function getTicketByNumber(req, res) {
         t.ticket_id,
         t.ticket_number,
         t.cust_name,
+        t.sub_status,
         t.issue_summary,
         t.device_description,
         t.device_type,
@@ -109,6 +114,7 @@ async function getTicketByNumber(req, res) {
       LEFT JOIN technicians tech
         ON t.assigned_technician_id = tech.technician_id
       WHERE t.ticket_number = $1
+        AND COALESCE(t.is_archived, FALSE) = FALSE
       `,
       [ticketNumber]
     );
@@ -123,9 +129,10 @@ async function getTicketByNumber(req, res) {
     res.status(500).json({ error: 'Failed to fetch ticket' });
   }
 }
+
 async function getBoardData(req, res) {
   try {
-     const techniciansResult = await pool.query(`
+    const techniciansResult = await pool.query(`
       SELECT technician_id, name, email
       FROM technicians
       WHERE is_active = TRUE
@@ -137,6 +144,7 @@ async function getBoardData(req, res) {
         t.ticket_id,
         t.ticket_number,
         t.cust_name,
+        t.sub_status,
         t.issue_summary,
         t.device_type,
         t.priority_level,
@@ -150,6 +158,7 @@ async function getBoardData(req, res) {
       FROM tickets t
       LEFT JOIN technicians tech
         ON t.assigned_technician_id = tech.technician_id
+      WHERE COALESCE(t.is_archived, FALSE) = FALSE
       ORDER BY
         CASE WHEN t.current_status = 'Done' THEN 1 ELSE 0 END,
         COALESCE(t.assigned_technician_id, 999999),
@@ -169,42 +178,158 @@ async function getBoardData(req, res) {
 
 async function moveTicket(req, res) {
   const { ticketId } = req.params;
-  const { assignedTechnicianId, currentStatus, sortOrder } = req.body;
+  const { assignedTechnicianId, currentStatus, subStatus, sortOrder } = req.body;
+
+  const client = await pool.connect();
 
   try {
-    const fields = [];
-    const values = [];
-    let index = 1;
+    await client.query('BEGIN');
 
-    if (assignedTechnicianId !== undefined) {
-      fields.push(`assigned_technician_id = $${index++}`);
-      values.push(assignedTechnicianId);
+    const existingResult = await client.query(
+      `SELECT * FROM tickets WHERE ticket_id = $1 FOR UPDATE`,
+      [ticketId]
+    );
+
+    if (existingResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    if (currentStatus !== undefined) {
-      fields.push(`current_status = $${index++}`);
-      values.push(currentStatus);
+    const oldTicket = existingResult.rows[0];
+
+    const nextAssignedTechnicianId =
+      assignedTechnicianId !== undefined
+        ? assignedTechnicianId
+        : oldTicket.assigned_technician_id;
+
+    const nextStatus =
+      currentStatus !== undefined
+        ? currentStatus
+        : oldTicket.current_status;
+
+    const nextSubStatus =
+      subStatus !== undefined
+        ? subStatus || null
+        : oldTicket.sub_status;
+
+    const nextSortOrder =
+      sortOrder !== undefined
+        ? sortOrder
+        : oldTicket.sort_order;
+
+    let nextStartedAt = oldTicket.started_at;
+    let nextCompletedAt = oldTicket.completed_at;
+
+    if (!nextStartedAt && nextAssignedTechnicianId) {
+      nextStartedAt = new Date();
     }
 
-    if (sortOrder !== undefined) {
-      fields.push(`sort_order = $${index++}`);
-      values.push(sortOrder);
+    if (oldTicket.current_status !== nextStatus) {
+      if (nextStatus === 'Done' && !nextCompletedAt) {
+        nextCompletedAt = new Date();
+      }
+      if (oldTicket.current_status === 'Done' && nextStatus !== 'Done') {
+        nextCompletedAt = null;
+      }
     }
 
-    if (fields.length === 0) {
-      return res.status(400).json({ error: 'No fields provided to update' });
+    const updateResult = await client.query(
+      `
+      UPDATE tickets
+      SET
+        assigned_technician_id = $1,
+        current_status = $2,
+        sub_status = $3,
+        sort_order = $4,
+        started_at = $5,
+        completed_at = $6,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE ticket_id = $7
+      RETURNING *
+      `,
+      [
+        nextAssignedTechnicianId,
+        nextStatus,
+        nextSubStatus,
+        nextSortOrder,
+        nextStartedAt,
+        nextCompletedAt,
+        ticketId
+      ]
+    );
+
+    const updatedTicket = updateResult.rows[0];
+
+    if (oldTicket.current_status !== nextStatus) {
+      await client.query(
+        `
+        INSERT INTO ticket_events (
+          ticket_id, event_type, old_status, new_status, technician_id
+        )
+        VALUES ($1, 'STATUS_CHANGE', $2, $3, $4)
+        `,
+        [ticketId, oldTicket.current_status, nextStatus, nextAssignedTechnicianId]
+      );
     }
 
-    values.push(ticketId);
+    if (oldTicket.sub_status !== nextSubStatus) {
+      await client.query(
+        `
+        INSERT INTO ticket_events (
+          ticket_id, event_type, old_status, new_status, technician_id
+        )
+        VALUES ($1, 'SUB_STATUS_CHANGE', $2, $3, $4)
+        `,
+        [ticketId, oldTicket.sub_status, nextSubStatus, nextAssignedTechnicianId]
+      );
+    }
 
+    if (oldTicket.assigned_technician_id !== nextAssignedTechnicianId) {
+      await client.query(
+        `
+        INSERT INTO ticket_events (
+          ticket_id, event_type, technician_id
+        )
+        VALUES ($1, 'ASSIGNMENT_CHANGE', $2)
+        `,
+        [ticketId, nextAssignedTechnicianId]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    res.json({
+      message: 'Ticket updated successfully',
+      ticket: updatedTicket
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Move ticket error:', err);
+    res.status(500).json({ error: 'Failed to update ticket' });
+  } finally {
+    client.release();
+  }
+}
+
+async function deleteTicket(req, res) {
+  const { ticketId } = req.params;
+
+  try {
     const result = await pool.query(
       `
       UPDATE tickets
-      SET ${fields.join(', ')}
-      WHERE ticket_id = $${index}
+      SET
+        cust_name = 'Archived Customer',
+        issue_summary = '[Archived]',
+        device_description = NULL,
+        sub_status = NULL,
+        is_archived = TRUE,
+        picked_up_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE ticket_id = $1
       RETURNING *
       `,
-      values
+      [ticketId]
     );
 
     if (result.rows.length === 0) {
@@ -212,12 +337,12 @@ async function moveTicket(req, res) {
     }
 
     res.json({
-      message: 'Ticket updated successfully',
+      message: 'Ticket archived after pickup',
       ticket: result.rows[0]
     });
   } catch (err) {
-    console.error('Move ticket error:', err);
-    res.status(500).json({ error: 'Failed to update ticket' });
+    console.error('Archive ticket error:', err);
+    res.status(500).json({ error: 'Failed to archive ticket' });
   }
 }
 
@@ -235,10 +360,8 @@ async function getTicketHistory(req, res) {
         e.event_timestamp,
         tech.name AS technician_name
       FROM ticket_events e
-      JOIN tickets t
-        ON t.ticket_id = e.ticket_id
-      LEFT JOIN technicians tech
-        ON e.technician_id = tech.technician_id
+      JOIN tickets t ON t.ticket_id = e.ticket_id
+      LEFT JOIN technicians tech ON e.technician_id = tech.technician_id
       WHERE t.ticket_number = $1
       ORDER BY e.event_timestamp ASC
       `,
@@ -258,5 +381,6 @@ module.exports = {
   getTicketByNumber,
   getBoardData,
   moveTicket,
-  getTicketHistory
+  getTicketHistory,
+  deleteTicket
 };

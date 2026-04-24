@@ -26,11 +26,14 @@ CREATE TABLE IF NOT EXISTS tickets (
 	priority_level VARCHAR(20) NOT NULL DEFAULT 'Normal',
 
 	current_status VARCHAR(50) NOT NULL DEFAULT 'Waiting to Start',
+	sub_status VARCHAR(100),
 	assigned_technician_id INT,
 
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	started_at TIMESTAMP,
 	completed_at TIMESTAMP,
+	is_archived BOOLEAN DEFAULT FALSE,
+	picked_up_at TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 	-- Board ordering inside each technician column/status bucket
@@ -88,7 +91,7 @@ CREATE TABLE IF NOT EXISTS ticket_events (
 ALTER TABLE ticket_events DROP CONSTRAINT IF EXISTS event_type_check;
 ALTER TABLE ticket_events
 	ADD CONSTRAINT event_type_check
-	CHECK (event_type IN ('CREATED','STATUS_CHANGE','ASSIGNMENT_CHANGE','PRIORITY_CHANGE'));
+	CHECK (event_type IN ('CREATED','STATUS_CHANGE','ASSIGNMENT_CHANGE','PRIORITY_CHANGE','SUB_STATUS_CHANGE'));
 
 -- Indexes - common board / admin queries
 CREATE INDEX IF NOT EXISTS idx_ticket_status ON tickets(current_status); 

@@ -72,8 +72,9 @@ export function useBoardState() {
     e.preventDefault();
     const ticket = JSON.parse(e.dataTransfer.getData("ticket"));
 
-    const nextStatus =
-      ticket.current_status === "Waiting to Start" ? "In Progress" : ticket.current_status;
+const nextStatus = ticket.current_status === "Done"
+  ? "Waiting to Start"
+  : ticket.current_status;
 
     const movedTicket = {
       ...ticket,
@@ -159,33 +160,35 @@ export function useBoardState() {
     }
   };
 
-  const handleStatusChange = async (ticket, newStatus) => {
-    const updatedTicket = { ...ticket, current_status: newStatus };
-
-    const { newData, newNew, newResolved } = removeTicketEverywhere(
-      ticket, ticketData, newTickets, resolvedTickets
-    );
-
-    const next = structuredClone(newData);
-
-    if (!updatedTicket.technician_name) {
-      setNewTickets([...newNew, updatedTicket]);
-    } else {
-      next[updatedTicket.technician_name].actively.push(updatedTicket);
-      setTicketData(next);
-    }
-
-    try {
-      await persistMove(ticket.ticket_id, {
-        currentStatus: newStatus,
-        assignedTechnicianId: undefined,
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update status");
-      window.location.reload();
-    }
+const handleStatusChange = async (ticket, newSubStatus) => {
+  const updatedTicket = {
+    ...ticket,
+    sub_status: newSubStatus || null,
   };
+
+  const { newData, newNew, newResolved } = removeTicketEverywhere(
+    ticket, ticketData, newTickets, resolvedTickets
+  );
+
+  const next = structuredClone(newData);
+
+  if (!updatedTicket.technician_name) {
+    setNewTickets([...newNew, updatedTicket]);
+  } else {
+    next[updatedTicket.technician_name].actively.push(updatedTicket);
+    setTicketData(next);
+  }
+
+  try {
+    await persistMove(ticket.ticket_id, {
+      subStatus: newSubStatus || null,
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update sub-status");
+    window.location.reload();
+  }
+};
 
   return {
     technicians,

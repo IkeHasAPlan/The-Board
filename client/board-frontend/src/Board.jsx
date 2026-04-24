@@ -1,6 +1,6 @@
 import React from "react";
 import TicketCard from "./TicketCard";
-import { useBoardState } from "./useBoardState";
+import { useBoardState } from "./BoardController";
 import "./Board.css";
 
 function Board() {
@@ -16,6 +16,29 @@ function Board() {
     handleDropOnResolved,
     handleStatusChange,
   } = useBoardState();
+
+const handleDeleteTicket = async (ticket) => {
+  const confirmed = window.confirm(
+    `Remove ticket #${ticket.ticket_number} permanently?\n\nOnly do this after the customer has picked up their machine.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/tickets/${ticket.ticket_id}`, {
+      method: "DELETE"
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete ticket");
+    }
+
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to remove ticket.");
+  }
+};
 
   const techStartCol = 2;
   const resolvedCol = techStartCol + technicians.length;
@@ -93,6 +116,7 @@ function Board() {
             ticket={ticket}
             type="resolved"
             onStatusChange={handleStatusChange}
+            onDeleteTicket={handleDeleteTicket}
           />
         ))}
       </div>
