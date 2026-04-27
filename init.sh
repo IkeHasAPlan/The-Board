@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 set -e
 
-echo " Installing root dependencies"
+echo " Installing dependencies"
+npm install
+cd client/board-frontend || exit
 npm install
 
-echo " Initializing DB"
+echo " Building client"
+npm run build
+cd ../..
+
 if [ "$1" == "y" ]; then
     # TODO: add this as a optional startup parameter
+    echo " Initializing DB"
     echo " TODO"
 fi
 
-echo " Installing client dependencies"
-cd client || exit
-npm install
-cd ..
-
-echo " Starting both API and React client"
-#npm run dev
+echo " Starting"
+npm start
