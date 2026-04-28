@@ -1,0 +1,8 @@
+node_modules
+client/board-frontend/node_modules
+client/board-frontend/dist
+NEEDSIMPLEMENTEDSTILL
+.git
+.gitignore
+*.log
+board_backup.sql
