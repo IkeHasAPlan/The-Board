@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 	issue_summary TEXT NOT NULL,
 	device_description TEXT,
 	device_type VARCHAR(100),
+	warranty BOOLEAN,
 
 	-- Priority is kept for reporting/labeling, not for board ordering
 	priority_level VARCHAR(20) NOT NULL DEFAULT 'Normal',

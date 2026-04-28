@@ -1,13 +1,19 @@
 const pool = require('../db');
 
 async function createTicket(req, res) {
-  const { firstName, lastName, workOrder, deviceDescription, jobDescription, deviceType } = req.body;
+  const { firstName, lastName, workOrder, deviceDescription, jobDescription, deviceType, warranty } = req.body;
 
   if (!firstName || !lastName || !workOrder || !jobDescription || !deviceType) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   const custName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+  var priority_to_set = "Urgent";
+  var warranty_to_set = (warranty || false);
+  if (!warranty) {
+    priority_to_set = "Normal";
+  }
 
   try {
     const result = await pool.query(
@@ -17,9 +23,11 @@ async function createTicket(req, res) {
         cust_name,
         issue_summary,
         device_description,
-        device_type
+        device_type,
+        warranty,
+        priority_level
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
       `,
       [
@@ -27,7 +35,9 @@ async function createTicket(req, res) {
         custName,
         jobDescription.trim(),
         deviceDescription ? deviceDescription.trim() : null,
-        deviceType.trim()
+        deviceType.trim(),
+        warranty,
+        priority_to_set
       ]
     );
 
