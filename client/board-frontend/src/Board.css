@@ -78,15 +78,3 @@ body,
   border-radius: 999px;
 }
 
-.cell:empty::after {
-  content: "Drop tickets here";
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-  border: 1px dashed #475569;
-  border-radius: 12px;
-  color: #64748b;
-  font-weight: 600;
-  font-size: 0.9rem;
-}

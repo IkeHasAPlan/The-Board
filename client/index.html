@@ -9,6 +9,17 @@
   box-sizing: border-box;
 }
 
+.app-title {
+  margin: 10px 0 0;
+  font-size: 1.8rem;
+}
+
+.app-subtitle {
+  margin: 0px 0 0;
+  font-size: 1.1rem;
+  color: #888;
+}
+
 body {
   font-family: system-ui, Arial, sans-serif;
   background: #0b1f3a;
@@ -109,12 +120,14 @@ button:hover {
 }
 </style>
 </head>
-
+<script src="/session-timeout.js"></script>
 <body>
 
 <div class="login-wrapper">
-  <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo">
 
+  <img src="/logo.png" alt="Columbia Computer Center Logo" class="logo">
+  <h1 class="app-title">The Board</h1>
+  <p class="app-subtitle">Workflow Manager</p>
   <div class="login-box">
     <h2>Login</h2>
 
@@ -123,14 +136,12 @@ button:hover {
       <input id="password" type="password" placeholder="Password">
     </div>
 
-    <button onclick="login()">Login</button>
+    <button id="loginButton" onclick="login()">Login</button>
 
     <div id="error"></div>
 
     <div class="hint">
-      Mock credentials for demo:<br>
-      admin / 123<br>
-      isaac / 123
+
     </div>
   </div>
 </div>
@@ -165,8 +176,17 @@ async function login() {
     window.location.href = "/home.html";
   } catch (err) {
     errorEl.textContent = "Could not reach server.";
+
+
   }
 }
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    login();
+  }
+});
 </script>
 
 </body>

@@ -20,8 +20,11 @@ app.post('/login', (req, res) => {
 
   const users = [
     { username: 'admin', password: '123', role: 'admin', displayName: 'Administrator' },
+    { username: 'tai', password: '123', role: 'admin', displayName: 'Tai' },
+    { username: 'dakota', password: '123', role: 'admin', displayName: 'Dakota' },
     { username: 'isaac', password: '123', role: 'employee', displayName: 'Isaac' },
-    { username: 'employee', password: '123', role: 'employee', displayName: 'Employee' }
+    { username: 'donovan', password: '123', role: 'employee', displayName: 'Donovan' },
+    { username: 'josh', password: '123', role: 'employee', displayName: 'Josh' },
   ];
 
   const user = users.find(

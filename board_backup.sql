@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7a0t0Nen8XaebhLccfUmpRTz3w9BNWVv7VrXpzryi0jMn2L8gImY1jt1IAnaww1
+\restrict ItKsAWGUQUSDgsz8oKKTYG0t4Op6nZKStSJrYaxd9wZlUZtOetDaIRyBHhEsuEB
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -19,131 +19,6 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: log_ticket_assignment_change(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.log_ticket_assignment_change() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  IF NEW.assigned_technician_id IS DISTINCT FROM OLD.assigned_technician_id THEN
-    INSERT INTO ticket_events(
-      ticket_id,
-      event_type,
-      technician_id
-    )
-    VALUES (
-      NEW.ticket_id,
-      'ASSIGNMENT_CHANGE',
-      NEW.assigned_technician_id
-    );
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.log_ticket_assignment_change() OWNER TO postgres;
-
---
--- Name: log_ticket_created(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.log_ticket_created() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  INSERT INTO ticket_events(ticket_id, event_type, technician_id)
-  VALUES (NEW.ticket_id, 'CREATED', NEW.assigned_technician_id);
-
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.log_ticket_created() OWNER TO postgres;
-
---
--- Name: log_ticket_status_change(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.log_ticket_status_change() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  IF NEW.current_status IS DISTINCT FROM OLD.current_status THEN
-    INSERT INTO ticket_events(
-      ticket_id,
-      event_type,
-      old_status,
-      new_status,
-      technician_id
-    )
-    VALUES (
-      NEW.ticket_id,
-      'STATUS_CHANGE',
-      OLD.current_status,
-      NEW.current_status,
-      NEW.assigned_technician_id
-    );
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.log_ticket_status_change() OWNER TO postgres;
-
---
--- Name: set_ticket_lifecycle_timestamps(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.set_ticket_lifecycle_timestamps() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  IF NEW.current_status IS DISTINCT FROM OLD.current_status THEN
-
-    IF NEW.current_status = 'In Progress' AND OLD.started_at IS NULL THEN
-      NEW.started_at = COALESCE(NEW.started_at, CURRENT_TIMESTAMP);
-    END IF;
-
-    IF NEW.current_status = 'Done' THEN
-      NEW.completed_at = COALESCE(NEW.completed_at, CURRENT_TIMESTAMP);
-    END IF;
-
-    IF OLD.current_status = 'Done' AND NEW.current_status <> 'Done' THEN
-      NEW.completed_at = NULL;
-    END IF;
-
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.set_ticket_lifecycle_timestamps() OWNER TO postgres;
-
---
--- Name: set_ticket_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.set_ticket_updated_at() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  NEW.updated_at = CURRENT_TIMESTAMP;
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.set_ticket_updated_at() OWNER TO postgres;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -156,7 +31,9 @@ CREATE TABLE public.technicians (
     technician_id integer NOT NULL,
     name character varying(100) NOT NULL,
     email character varying(100) NOT NULL,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -196,7 +73,7 @@ CREATE TABLE public.ticket_events (
     new_status character varying(50),
     technician_id integer,
     event_timestamp timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT event_type_check CHECK (((event_type)::text = ANY ((ARRAY['CREATED'::character varying, 'STATUS_CHANGE'::character varying, 'ASSIGNMENT_CHANGE'::character varying, 'PRIORITY_CHANGE'::character varying])::text[])))
+    CONSTRAINT event_type_check CHECK (((event_type)::text = ANY ((ARRAY['CREATED'::character varying, 'STATUS_CHANGE'::character varying, 'ASSIGNMENT_CHANGE'::character varying, 'PRIORITY_CHANGE'::character varying, 'SUB_STATUS_CHANGE'::character varying])::text[])))
 );
 
 
@@ -243,6 +120,9 @@ CREATE TABLE public.tickets (
     completed_at timestamp without time zone,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     sort_order integer DEFAULT 1000,
+    sub_status character varying(100),
+    is_archived boolean DEFAULT false,
+    picked_up_at timestamp without time zone,
     CONSTRAINT priority_check CHECK (((priority_level)::text = ANY ((ARRAY['Low'::character varying, 'Normal'::character varying, 'High'::character varying, 'Urgent'::character varying])::text[]))),
     CONSTRAINT status_check CHECK (((current_status)::text = ANY ((ARRAY['Waiting to Start'::character varying, 'In Progress'::character varying, 'Waiting for Customer Response'::character varying, 'Waiting for Part'::character varying, 'Done'::character varying])::text[])))
 );
@@ -297,14 +177,15 @@ ALTER TABLE ONLY public.tickets ALTER COLUMN ticket_id SET DEFAULT nextval('publ
 -- Data for Name: technicians; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.technicians (technician_id, name, email, created_at) FROM stdin;
-1	Christian	christian@board.com	2026-04-13 15:45:29.654295
-2	Tai	tai@board.com	2026-04-13 15:45:29.654295
-3	Dakota	dakota@board.com	2026-04-13 15:45:29.654295
-4	Isaac	isaac@board.com	2026-04-13 15:45:29.654295
-5	Donovan	donovan@board.com	2026-04-13 15:45:29.654295
-6	Josh	josh@board.com	2026-04-13 15:45:29.654295
-7	David	david@board.com	2026-04-13 15:45:29.654295
+COPY public.technicians (technician_id, name, email, is_active, created_at, updated_at) FROM stdin;
+2	Tai	tai@board.com	t	2026-04-23 17:18:30.589253	2026-04-23 17:18:30.589253
+3	Dakota	dakota@board.com	t	2026-04-23 17:18:30.589253	2026-04-23 17:18:30.589253
+4	Isaac	isaac@board.com	t	2026-04-23 17:18:30.589253	2026-04-23 17:18:30.589253
+5	Donovan	donovan@board.com	t	2026-04-23 17:18:30.589253	2026-04-23 17:18:30.589253
+8	Garrett	garrett@placeholder.local	f	2026-04-23 20:30:09.827316	2026-04-23 20:30:34.216487
+1	Christian	christian@board.com	f	2026-04-23 17:18:30.589253	2026-04-23 20:38:09.861289
+6	Josh	josh@board.com	t	2026-04-23 17:18:30.589253	2026-04-23 20:38:12.487317
+7	David	david@board.com	t	2026-04-23 17:18:30.589253	2026-04-28 11:21:45.180112
 \.
 
 
@@ -313,22 +194,20 @@ COPY public.technicians (technician_id, name, email, created_at) FROM stdin;
 --
 
 COPY public.ticket_events (event_id, ticket_id, event_type, old_status, new_status, technician_id, event_timestamp) FROM stdin;
-1	9	CREATED	\N	\N	\N	2026-04-13 16:16:45.845799
-2	9	ASSIGNMENT_CHANGE	\N	\N	5	2026-04-13 16:17:55.589036
-3	9	STATUS_CHANGE	Waiting to Start	In Progress	5	2026-04-13 16:17:55.589036
-4	9	ASSIGNMENT_CHANGE	\N	\N	6	2026-04-13 16:18:26.868956
-5	9	STATUS_CHANGE	In Progress	Done	6	2026-04-13 16:18:36.871148
-6	2	ASSIGNMENT_CHANGE	\N	\N	2	2026-04-13 16:22:22.04334
-7	2	STATUS_CHANGE	Waiting to Start	In Progress	2	2026-04-13 16:22:22.04334
-8	1	ASSIGNMENT_CHANGE	\N	\N	3	2026-04-13 16:27:33.963576
-9	1	STATUS_CHANGE	Waiting to Start	In Progress	3	2026-04-13 16:27:33.963576
-10	1	ASSIGNMENT_CHANGE	\N	\N	5	2026-04-13 16:27:37.186545
-11	2	ASSIGNMENT_CHANGE	\N	\N	3	2026-04-13 17:24:44.013541
-12	7	STATUS_CHANGE	Waiting to Start	In Progress	4	2026-04-15 00:06:50.226292
-13	7	ASSIGNMENT_CHANGE	\N	\N	6	2026-04-15 00:06:52.883903
-14	7	STATUS_CHANGE	In Progress	Done	6	2026-04-15 00:06:55.479434
-15	3	ASSIGNMENT_CHANGE	\N	\N	\N	2026-04-15 00:08:00.048283
-16	3	STATUS_CHANGE	In Progress	Waiting to Start	\N	2026-04-15 00:08:00.048283
+37	12	ASSIGNMENT_CHANGE	\N	\N	4	2026-04-23 20:04:48.303706
+38	12	STATUS_CHANGE	Waiting to Start	Done	4	2026-04-23 20:04:49.177941
+39	16	ASSIGNMENT_CHANGE	\N	\N	4	2026-04-28 11:16:27.720206
+40	16	ASSIGNMENT_CHANGE	\N	\N	5	2026-04-28 11:17:14.853912
+41	16	STATUS_CHANGE	Waiting to Start	Done	5	2026-04-28 11:17:55.461922
+42	17	ASSIGNMENT_CHANGE	\N	\N	5	2026-04-28 11:25:31.061925
+43	17	ASSIGNMENT_CHANGE	\N	\N	6	2026-04-28 11:25:45.61183
+44	17	SUB_STATUS_CHANGE	\N	Waiting for Part	6	2026-04-28 11:26:20.803887
+45	17	ASSIGNMENT_CHANGE	\N	\N	\N	2026-04-29 21:10:00.629491
+46	16	STATUS_CHANGE	Done	Waiting to Start	\N	2026-04-29 21:10:01.959852
+47	16	ASSIGNMENT_CHANGE	\N	\N	\N	2026-04-29 21:10:01.959852
+48	15	ASSIGNMENT_CHANGE	\N	\N	4	2026-04-29 21:10:08.728742
+49	17	ASSIGNMENT_CHANGE	\N	\N	2	2026-04-29 21:10:17.543114
+50	17	SUB_STATUS_CHANGE	Waiting for Part	Waiting for Customer Response	2	2026-04-29 21:10:22.730422
 \.
 
 
@@ -336,16 +215,11 @@ COPY public.ticket_events (event_id, ticket_id, event_type, old_status, new_stat
 -- Data for Name: tickets; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.tickets (ticket_id, ticket_number, cust_name, issue_summary, device_description, device_type, priority_level, current_status, assigned_technician_id, created_at, started_at, completed_at, updated_at, sort_order) FROM stdin;
-4	T2004	Lu Lee	OS reinstall	\N	Desktop	Normal	Waiting for Customer Response	2	2026-04-13 15:45:29.660516	\N	\N	2026-04-13 15:45:29.660516	1000
-5	T2005	Iron Man	Keyboard replacement (parts pending)	\N	Laptop	Normal	Waiting for Part	2	2026-04-13 15:45:29.660516	\N	\N	2026-04-13 15:45:29.660516	1000
-6	T2006	Joohn Ceeena	Data transfer	\N	Laptop	Normal	In Progress	4	2026-04-13 15:45:29.660516	\N	\N	2026-04-13 15:45:29.660516	0
-8	58	Isaac Rivera	NVMe Upgrade	HP Envy	Laptop	Normal	Done	6	2026-04-13 15:54:25.733412	\N	\N	2026-04-13 15:54:25.733412	1000
-9	1	testing ticket	testing	Dell Inspiron	Laptop	Normal	Done	6	2026-04-13 16:16:45.845799	2026-04-13 16:17:55.589036	2026-04-13 16:18:36.871148	2026-04-13 16:18:36.871148	1000
-1	T2001	Taco Bell	Screen replacement	\N	Laptop	High	In Progress	5	2026-04-13 15:45:29.660516	2026-04-13 16:27:33.963576	\N	2026-04-13 16:27:37.186545	1000
-2	T2002	Professor X	Virus removal	\N	Desktop	Normal	In Progress	3	2026-04-13 15:45:29.660516	2026-04-13 16:22:22.04334	\N	2026-04-13 17:24:44.013541	1000
-7	T2007	Daft Punk	Device running slow	\N	Desktop	Low	Done	6	2026-04-13 15:45:29.660516	2026-04-15 00:06:50.226292	2026-04-15 00:06:55.479434	2026-04-15 00:06:55.479434	1000
-3	T2003	Toronto Raptors	Battery not charging	\N	Laptop	Urgent	Waiting to Start	\N	2026-04-13 15:45:29.660516	\N	\N	2026-04-15 00:08:00.048283	0
+COPY public.tickets (ticket_id, ticket_number, cust_name, issue_summary, device_description, device_type, priority_level, current_status, assigned_technician_id, created_at, started_at, completed_at, updated_at, sort_order, sub_status, is_archived, picked_up_at) FROM stdin;
+12	1	Archived Customer	[Archived]	\N	Laptop	Normal	Done	4	2026-04-23 20:04:44.940505	2026-04-23 20:04:48.303	2026-04-23 20:04:49.178	2026-04-23 20:04:55.869307	1000	\N	t	2026-04-23 20:04:55.869307
+16	5	Kris Culmer	Screen Replacement	Mac	Laptop	Normal	Waiting to Start	\N	2026-04-28 11:16:01.614962	2026-04-28 11:16:27.719	\N	2026-04-29 21:10:01.959852	1000	\N	f	\N
+15	1280	Kris Culmer	Screen Replacement	Mac	Laptop	Normal	Waiting to Start	4	2026-04-28 11:15:43.34621	2026-04-29 21:10:08.729	\N	2026-04-29 21:10:08.728742	1000	\N	f	\N
+17	6	Fang Wang	Virus Removal	Dell	Laptop	Normal	Waiting to Start	2	2026-04-28 11:25:08.307282	2026-04-28 11:25:31.068	\N	2026-04-29 21:10:22.730422	1000	Waiting for Customer Response	f	\N
 \.
 
 
@@ -353,21 +227,21 @@ COPY public.tickets (ticket_id, ticket_number, cust_name, issue_summary, device_
 -- Name: technicians_technician_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.technicians_technician_id_seq', 7, true);
+SELECT pg_catalog.setval('public.technicians_technician_id_seq', 8, true);
 
 
 --
 -- Name: ticket_events_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.ticket_events_event_id_seq', 16, true);
+SELECT pg_catalog.setval('public.ticket_events_event_id_seq', 50, true);
 
 
 --
 -- Name: tickets_ticket_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 9, true);
+SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 17, true);
 
 
 --
@@ -467,41 +341,6 @@ CREATE INDEX idx_ticket_technician ON public.tickets USING btree (assigned_techn
 
 
 --
--- Name: tickets trigger_assignment_change; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_assignment_change AFTER UPDATE OF assigned_technician_id ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.log_ticket_assignment_change();
-
-
---
--- Name: tickets trigger_set_lifecycle_timestamps; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_set_lifecycle_timestamps BEFORE UPDATE OF current_status ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.set_ticket_lifecycle_timestamps();
-
-
---
--- Name: tickets trigger_status_change; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_status_change AFTER UPDATE OF current_status ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.log_ticket_status_change();
-
-
---
--- Name: tickets trigger_ticket_created; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_ticket_created AFTER INSERT ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.log_ticket_created();
-
-
---
--- Name: tickets trigger_ticket_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_ticket_updated_at BEFORE UPDATE ON public.tickets FOR EACH ROW EXECUTE FUNCTION public.set_ticket_updated_at();
-
-
---
 -- Name: tickets fk_assigned_technician; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -529,5 +368,5 @@ ALTER TABLE ONLY public.ticket_events
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7a0t0Nen8XaebhLccfUmpRTz3w9BNWVv7VrXpzryi0jMn2L8gImY1jt1IAnaww1
+\unrestrict ItKsAWGUQUSDgsz8oKKTYG0t4Op6nZKStSJrYaxd9wZlUZtOetDaIRyBHhEsuEB
 

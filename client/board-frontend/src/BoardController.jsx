@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3001";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 const persistMove = async (ticketId, payload) => {
   const response = await fetch(`${API_BASE}/tickets/${ticketId}/move`, {
@@ -21,61 +21,85 @@ export function useBoardState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function loadBoard() {
-      try {
-        setLoading(true);
-        setError("");
+  const isSavingMoveRef = useRef(false);
 
-        const response = await fetch(`${API_BASE}/tickets/board-data`);
-        if (!response.ok) throw new Error("Failed to fetch board data");
+  const loadBoard = async (showLoading = false) => {
+    if (isSavingMoveRef.current) return;
 
-        const data = await response.json();
-        const fetchedTechnicians = data.technicians || [];
-        const fetchedTickets = data.tickets || [];
+    try {
+      if (showLoading) setLoading(true);
+      setError("");
 
-        const techNames = fetchedTechnicians.map((tech) => tech.name);
-        const techBuckets = {};
-        techNames.forEach((name) => {
-          techBuckets[name] = emptyTech();
-        });
+      const response = await fetch(`${API_BASE}/tickets/board-data`);
+      if (!response.ok) throw new Error("Failed to fetch board data");
 
-        const newBucket = [];
-        const resolvedBucket = [];
+      const data = await response.json();
+      const fetchedTechnicians = data.technicians || [];
+      const fetchedTickets = data.tickets || [];
 
-        fetchedTickets.forEach((ticket) => {
-          if (ticket.current_status === "Done") {
-            resolvedBucket.push(ticket);
-          } else if (ticket.technician_name && techBuckets[ticket.technician_name]) {
-            techBuckets[ticket.technician_name].actively.push(ticket);
-          } else {
-            newBucket.push(ticket);
-          }
-        });
+      const techBuckets = {};
+      fetchedTechnicians.forEach((tech) => {
+        techBuckets[tech.name] = emptyTech();
+      });
 
-        setTechnicians(fetchedTechnicians);
-        setTicketData(techBuckets);
-        setNewTickets(newBucket);
-        setResolvedTickets(resolvedBucket);
-      } catch (err) {
-        console.error(err);
-        setError("Could not load board data.");
-      } finally {
-        setLoading(false);
-      }
+      const newBucket = [];
+      const resolvedBucket = [];
+
+      fetchedTickets.forEach((ticket) => {
+        if (ticket.current_status === "Done") {
+          resolvedBucket.push(ticket);
+        } else if (ticket.technician_name && techBuckets[ticket.technician_name]) {
+          techBuckets[ticket.technician_name].actively.push(ticket);
+        } else {
+          newBucket.push(ticket);
+        }
+      });
+
+      setTechnicians(fetchedTechnicians);
+      setTicketData(techBuckets);
+      setNewTickets(newBucket);
+      setResolvedTickets(resolvedBucket);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load board data.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    loadBoard();
+  useEffect(() => {
+    loadBoard(true);
+
+    const intervalId = setInterval(() => {
+      loadBoard(false);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
+  const saveMove = async (ticketId, payload) => {
+    isSavingMoveRef.current = true;
+
+    try {
+      await persistMove(ticketId, payload);
+      await loadBoard(false);
+    } catch (err) {
+      console.error(err);
+      alert("Could not save ticket move.");
+      await loadBoard(false);
+    } finally {
+      isSavingMoveRef.current = false;
+    }
+  };
 
   const handleDropOnTech = async (e, tech) => {
     e.preventDefault();
     const ticket = JSON.parse(e.dataTransfer.getData("ticket"));
 
-const nextStatus = ticket.current_status === "Done"
-  ? "Waiting to Start"
-  : ticket.current_status;
-
+    const nextStatus =
+  ticket.current_status === "Done" || ticket.current_status === "Waiting to Start"
+    ? "In Progress"
+    : ticket.current_status;
     const movedTicket = {
       ...ticket,
       assigned_technician_id: tech.technician_id,
@@ -84,7 +108,10 @@ const nextStatus = ticket.current_status === "Done"
     };
 
     const { newData, newNew, newResolved } = removeTicketEverywhere(
-      ticket, ticketData, newTickets, resolvedTickets
+      ticket,
+      ticketData,
+      newTickets,
+      resolvedTickets
     );
 
     if (!newData[tech.name]) newData[tech.name] = emptyTech();
@@ -94,16 +121,10 @@ const nextStatus = ticket.current_status === "Done"
     setNewTickets(newNew);
     setResolvedTickets(newResolved);
 
-    try {
-      await persistMove(ticket.ticket_id, {
-        assignedTechnicianId: tech.technician_id,
-        currentStatus: nextStatus,
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Could not save ticket move.");
-      window.location.reload();
-    }
+    await saveMove(ticket.ticket_id, {
+      assignedTechnicianId: tech.technician_id,
+      currentStatus: nextStatus,
+    });
   };
 
   const handleDropOnNew = async (e) => {
@@ -118,77 +139,78 @@ const nextStatus = ticket.current_status === "Done"
     };
 
     const { newData, newNew, newResolved } = removeTicketEverywhere(
-      ticket, ticketData, newTickets, resolvedTickets
+      ticket,
+      ticketData,
+      newTickets,
+      resolvedTickets
     );
 
     setTicketData(newData);
     setNewTickets([...newNew, movedTicket]);
     setResolvedTickets(newResolved);
 
-    try {
-      await persistMove(ticket.ticket_id, {
-        assignedTechnicianId: null,
-        currentStatus: "Waiting to Start",
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Could not save ticket move.");
-      window.location.reload();
-    }
+    await saveMove(ticket.ticket_id, {
+      assignedTechnicianId: null,
+      currentStatus: "Waiting to Start",
+    });
   };
 
   const handleDropOnResolved = async (e) => {
     e.preventDefault();
     const ticket = JSON.parse(e.dataTransfer.getData("ticket"));
 
-    const movedTicket = { ...ticket, current_status: "Done" };
+    const movedTicket = {
+      ...ticket,
+      current_status: "Done",
+    };
 
     const { newData, newNew, newResolved } = removeTicketEverywhere(
-      ticket, ticketData, newTickets, resolvedTickets
+      ticket,
+      ticketData,
+      newTickets,
+      resolvedTickets
     );
 
     setTicketData(newData);
     setNewTickets(newNew);
     setResolvedTickets([...newResolved, movedTicket]);
 
-    try {
-      await persistMove(ticket.ticket_id, { currentStatus: "Done" });
-    } catch (err) {
-      console.error(err);
-      alert("Could not save ticket move.");
-      window.location.reload();
+    await saveMove(ticket.ticket_id, {
+      currentStatus: "Done",
+    });
+  };
+
+  const handleStatusChange = async (ticket, newSubStatus) => {
+    const updatedTicket = {
+      ...ticket,
+      sub_status: newSubStatus || null,
+    };
+
+    const { newData, newNew, newResolved } = removeTicketEverywhere(
+      ticket,
+      ticketData,
+      newTickets,
+      resolvedTickets
+    );
+
+    if (!updatedTicket.technician_name) {
+      setNewTickets([...newNew, updatedTicket]);
+      setTicketData(newData);
+    } else {
+      if (!newData[updatedTicket.technician_name]) {
+        newData[updatedTicket.technician_name] = emptyTech();
+      }
+      newData[updatedTicket.technician_name].actively.push(updatedTicket);
+      setTicketData(newData);
+      setNewTickets(newNew);
     }
-  };
 
-const handleStatusChange = async (ticket, newSubStatus) => {
-  const updatedTicket = {
-    ...ticket,
-    sub_status: newSubStatus || null,
-  };
+    setResolvedTickets(newResolved);
 
-  const { newData, newNew, newResolved } = removeTicketEverywhere(
-    ticket, ticketData, newTickets, resolvedTickets
-  );
-
-  const next = structuredClone(newData);
-
-  if (!updatedTicket.technician_name) {
-    setNewTickets([...newNew, updatedTicket]);
-  } else {
-    next[updatedTicket.technician_name].actively.push(updatedTicket);
-    setTicketData(next);
-  }
-
-  try {
-    await persistMove(ticket.ticket_id, {
+    await saveMove(ticket.ticket_id, {
       subStatus: newSubStatus || null,
     });
-  } catch (err) {
-    console.error(err);
-    alert("Failed to update sub-status");
-    window.location.reload();
-  }
-};
+  };
 
   return {
     technicians,
@@ -204,8 +226,6 @@ const handleStatusChange = async (ticket, newSubStatus) => {
   };
 }
 
-// --- Utils ---
-
 export const emptyTech = () => ({ actively: [] });
 
 export const removeTicketEverywhere = (ticket, data, newT, resolved) => {
@@ -213,9 +233,6 @@ export const removeTicketEverywhere = (ticket, data, newT, resolved) => {
 
   for (const tech of Object.keys(next)) {
     next[tech].actively = next[tech].actively.filter(
-      (t) => t.ticket_id !== ticket.ticket_id
-    );
-    next[tech].waiting = (next[tech].waiting || []).filter(
       (t) => t.ticket_id !== ticket.ticket_id
     );
   }

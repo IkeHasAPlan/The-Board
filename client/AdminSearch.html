@@ -183,6 +183,7 @@
         border: 1px solid var(--border-2);
         border-radius: 14px;
         padding: 14px;
+        padding-bottom: 30px;
         background: var(--panel-2);
         display: grid;
         grid-template-columns: 1fr auto;
@@ -190,6 +191,15 @@
         align-items: start;
         cursor: pointer;
         transition: all 0.2s ease;
+        position: relative;
+      }
+    .ticket .created-date {
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
       }
 
       .ticket:hover {
@@ -228,6 +238,11 @@
         align-items: center;
         gap: 16px;
         margin-bottom: 22px;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
 
       .detail-header h1 {
@@ -338,6 +353,43 @@
         }
       }
 
+      .edit-button {
+  border: 1px solid var(--accent-2);
+  background: #1d4ed8;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-button.save {
+  background: #16a34a;
+  border-color: #86efac;
+}
+
+.edit-message {
+  margin-bottom: 14px;
+  color: #86efac;
+  font-weight: 800;
+}
+
+.edit-field {
+  width: 100%;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 10px;
+  background: #0f172a;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+
+textarea.edit-field {
+  min-height: 90px;
+  resize: vertical;
+}
+
       @media (max-width: 640px) {
         body {
           padding: 16px;
@@ -367,10 +419,12 @@
         .detail-header h1 {
           text-align: left;
         }
+
+        
       }
     </style>
   </head>
-
+<script src="/session-timeout.js"></script>
   <body>
     <div class="page">
       <div class="topbar">
@@ -434,11 +488,16 @@
         tickets.forEach(ticket => {
           const div = document.createElement('div');
           div.className = 'ticket';
-          div.innerHTML = `
-            <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
-            <div class="type">${ticket.device_type || 'Unknown'}</div>
-            <div class="issue">${ticket.issue_summary}</div>
-          `;
+          const createdDate = ticket.created_at
+  ? new Date(ticket.created_at).toLocaleDateString()
+  : 'No date';
+
+div.innerHTML = `
+  <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
+  <div class="type">${ticket.device_type || 'Unknown'}</div>
+  <div class="issue">${ticket.issue_summary}</div>
+  <div class="created-date">${createdDate}</div>
+`;
 
           div.addEventListener('click', () => {
             document.querySelectorAll('.ticket').forEach(t => t.classList.remove('selected'));
@@ -476,7 +535,11 @@
   text = 'Ticket created';
 
 } else if (event.event_type === 'STATUS_CHANGE') {
-  text = `Status changed from "${event.old_status}" to "${event.new_status}"`;
+  if (event.new_status === 'Done') {
+    text = 'Status changed to "Done"';
+  } else {
+    text = `Status changed from "${event.old_status}" to "${event.new_status}"`;
+  }
 
 } else if (event.event_type === 'SUB_STATUS_CHANGE') {
   if (event.new_status) {
@@ -507,75 +570,164 @@
         }
       }
 
-      async function loadTicket(ticketNumber) {
-        try {
-          const res = await fetch(`/tickets/${ticketNumber}`);
-          const ticket = await res.json();
+let currentLoadedTicket = null;
+let editMode = false;
 
-          detailPanel.innerHTML = `
-            <div class="detail-header">
-              <h1>${ticket.cust_name} #${ticket.ticket_number}</h1>
-              <div class="status-badge">${ticket.current_status || 'N/A'}</div>
-            </div>
+async function loadTicket(ticketNumber, message = '') {
+  try {
+    const res = await fetch(`/tickets/${ticketNumber}`);
+    const ticket = await res.json();
 
-            <div class="detail-grid">
-              <div class="detail-card">
-                <div class="detail-label">Device Type</div>
-                <div class="detail-value">${ticket.device_type || 'N/A'}</div>
-              </div>
+    currentLoadedTicket = ticket;
+    editMode = false;
+    renderTicketDetail(ticket, message);
+    loadTicketHistory(ticket.ticket_number);
+  } catch (err) {
+    console.error('Ticket detail failed:', err);
+    detailPanel.innerHTML = `
+      <div class="empty-state">
+        <h2>Error</h2>
+        <p>Could not load ticket details.</p>
+      </div>
+    `;
+  }
+}
 
-              <div class="detail-card">
-                <div class="detail-label">Device Description</div>
-                <div class="detail-value">${ticket.device_description || 'N/A'}</div>
-              </div>
+function valueOrBlank(value) {
+  return value || '';
+}
 
-              <div class="detail-card">
-                <div class="detail-label">Assigned Technician</div>
-                <div class="detail-value">${ticket.technician_name || 'Unassigned'}</div>
-              </div>
+function fieldHtml(id, value, multiline = false) {
+  if (!editMode) {
+    return `<div class="detail-value">${value || 'N/A'}</div>`;
+  }
 
-              <div class="detail-card">
-                <div class="detail-label">Priority</div>
-                <div class="detail-value">${ticket.priority_level || 'N/A'}</div>
-              </div>
-              ${ticket.sub_status ? `
+  if (multiline) {
+    return `<textarea id="${id}" class="edit-field">${valueOrBlank(value)}</textarea>`;
+  }
+
+  return `<input id="${id}" class="edit-field" value="${valueOrBlank(value)}" />`;
+}
+
+function renderTicketDetail(ticket, message = '') {
+  detailPanel.innerHTML = `
+    ${message ? `<div class="edit-message">${message}</div>` : ''}
+
+    <div class="detail-header">
+      <h1>
+        ${editMode
+          ? `<input id="editCustName" class="edit-field" value="${valueOrBlank(ticket.cust_name)}" />
+             <input id="editTicketNumber" class="edit-field" value="${valueOrBlank(ticket.ticket_number)}" style="margin-top: 8px;" />`
+          : `${ticket.cust_name} #${ticket.ticket_number}`
+        }
+      </h1>
+
+      <div class="header-actions">
+  <div class="status-badge">${ticket.current_status || 'N/A'}</div>
+  <button id="editSaveButton" class="edit-button ${editMode ? 'save' : ''}">
+    ${editMode ? 'Save' : 'Edit'}
+  </button>
+</div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-label">Device Type</div>
+        ${fieldHtml('editDeviceType', ticket.device_type)}
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">Device Description</div>
+        ${fieldHtml('editDeviceDescription', ticket.device_description, true)}
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">Assigned Technician</div>
+        <div class="detail-value">${ticket.technician_name || 'Unassigned'}</div>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">Priority</div>
+        ${editMode
+          ? `<select id="editPriority" class="edit-field">
+              <option value="Low" ${ticket.priority_level === 'Low' ? 'selected' : ''}>Low</option>
+              <option value="Normal" ${ticket.priority_level === 'Normal' ? 'selected' : ''}>Normal</option>
+              <option value="High" ${ticket.priority_level === 'High' ? 'selected' : ''}>High</option>
+              <option value="Urgent" ${ticket.priority_level === 'Urgent' ? 'selected' : ''}>Urgent</option>
+            </select>`
+          : `<div class="detail-value">${ticket.priority_level || 'N/A'}</div>`
+        }
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-label">Sub Status</div>
+        ${ticket.sub_status ? `
   <div class="detail-card">
     <div class="detail-label">Sub Status</div>
     <div class="detail-value">${ticket.sub_status}</div>
   </div>
 ` : ''}
+      </div>
 
-              <div class="detail-card full">
-                <div class="detail-label">Issue</div>
-                <div class="detail-value">${ticket.issue_summary || 'N/A'}</div>
-              </div>
+      <div class="detail-card full">
+        <div class="detail-label">Issue</div>
+        ${fieldHtml('editIssue', ticket.issue_summary, true)}
+      </div>
 
-              <div class="detail-card full">
-                <div class="detail-label">Timeline</div>
-                <div id="ticketTimeline" class="timeline-list">Loading timeline...</div>
-              </div>
-            </div>
-          `;
+      <div class="detail-card full">
+        <div class="detail-label">Timeline</div>
+        <div id="ticketTimeline" class="timeline-list">Loading timeline...</div>
+      </div>
+    </div>
+  `;
 
-          loadTicketHistory(ticket.ticket_number);
-        } catch (err) {
-          console.error('Ticket detail failed:', err);
-          detailPanel.innerHTML = `
-            <div class="empty-state">
-              <h2>Error</h2>
-              <p>Could not load ticket details.</p>
-            </div>
-          `;
-        }
-      }
+  document.getElementById('editSaveButton').addEventListener('click', async () => {
+    if (!editMode) {
+      editMode = true;
+      renderTicketDetail(currentLoadedTicket);
+      loadTicketHistory(currentLoadedTicket.ticket_number);
+      return;
+    }
 
-      let timeout;
-      searchInput.addEventListener('input', () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          searchTickets(searchInput.value.trim());
-        }, 250);
-      });
+    await saveTicketEdits();
+  });
+}
+
+async function saveTicketEdits() {
+  const originalTicketNumber = currentLoadedTicket.ticket_number;
+
+  const payload = {
+    newTicketNumber: document.getElementById('editTicketNumber').value.trim(),
+    custName: document.getElementById('editCustName').value.trim(),
+    issueSummary: document.getElementById('editIssue').value.trim(),
+    deviceDescription: document.getElementById('editDeviceDescription').value.trim(),
+    deviceType: document.getElementById('editDeviceType').value.trim(),
+    priorityLevel: document.getElementById('editPriority').value,
+  };
+
+  try {
+    const res = await fetch(`/tickets/${encodeURIComponent(originalTicketNumber)}/details`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Failed to save ticket changes.');
+      return;
+    }
+
+    searchTickets(searchInput.value.trim());
+    loadTicket(data.ticket.ticket_number, 'Ticket changes saved successfully.');
+  } catch (err) {
+    console.error('Save ticket edits failed:', err);
+    alert('Could not reach server.');
+  }
+}
 
       searchTickets();
     </script>

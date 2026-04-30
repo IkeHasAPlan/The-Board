@@ -1,11 +1,22 @@
 const pool = require('../db');
 
 async function createTicket(req, res) {
-  const { firstName, lastName, workOrder, deviceDescription, jobDescription, deviceType, warranty } = req.body;
+const {
+  firstName,
+  lastName,
+  workOrder,
+  ticketNumber,
+  deviceDescription,
+  jobDescription,
+  deviceType,
+  warranty
+} = req.body;
 
-  if (!firstName || !lastName || !workOrder || !jobDescription || !deviceType) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+const workOrderValue = workOrder || ticketNumber;
+
+if (!firstName || !lastName || !workOrderValue || !jobDescription || !deviceType) {
+  return res.status(400).json({ error: 'Missing required fields' });
+}
 
   const custName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
@@ -31,12 +42,12 @@ async function createTicket(req, res) {
       RETURNING *
       `,
       [
-        workOrder.trim(),
+        workOrderValue.trim(),
         custName,
         jobDescription.trim(),
         deviceDescription ? deviceDescription.trim() : null,
         deviceType.trim(),
-        warranty,
+        warranty_to_set,
         priority_to_set
       ]
     );
@@ -82,10 +93,14 @@ async function searchTickets(req, res) {
       WHERE
         COALESCE(t.is_archived, FALSE) = FALSE
         AND (
-          t.ticket_number ILIKE $1 OR
-          t.cust_name ILIKE $1 OR
-          t.issue_summary ILIKE $1 OR
-          t.device_type ILIKE $1
+         t.ticket_number ILIKE $1 OR
+t.cust_name ILIKE $1 OR
+t.issue_summary ILIKE $1 OR
+t.device_type ILIKE $1 OR
+TO_CHAR(t.created_at, 'YYYY') ILIKE $1 OR
+TO_CHAR(t.created_at, 'MM/DD/YYYY') ILIKE $1 OR
+TO_CHAR(t.created_at, 'YYYY-MM-DD') ILIKE $1 OR
+TO_CHAR(t.created_at, 'Month DD, YYYY') ILIKE $1
         )
       ORDER BY t.updated_at DESC
       LIMIT 25
@@ -212,10 +227,18 @@ async function moveTicket(req, res) {
         ? assignedTechnicianId
         : oldTicket.assigned_technician_id;
 
-    const nextStatus =
-      currentStatus !== undefined
-        ? currentStatus
-        : oldTicket.current_status;
+    let nextStatus =
+  currentStatus !== undefined
+    ? currentStatus
+    : oldTicket.current_status;
+
+if (
+  nextAssignedTechnicianId &&
+  oldTicket.current_status === 'Waiting to Start' &&
+  nextStatus === 'Waiting to Start'
+) {
+  nextStatus = 'In Progress';
+}
 
     const nextSubStatus =
       subStatus !== undefined
@@ -321,6 +344,68 @@ async function moveTicket(req, res) {
   }
 }
 
+async function updateTicketDetails(req, res) {
+  const { ticketNumber } = req.params;
+
+  const {
+    newTicketNumber,
+    custName,
+    issueSummary,
+    deviceDescription,
+    deviceType,
+    priorityLevel
+  } = req.body;
+
+  if (!newTicketNumber || !custName || !issueSummary) {
+    return res.status(400).json({ error: 'Ticket number, customer name, and issue are required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE tickets
+      SET
+        ticket_number = $1,
+        cust_name = $2,
+        issue_summary = $3,
+        device_description = $4,
+        device_type = $5,
+        priority_level = $6,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE ticket_number = $7
+        AND COALESCE(is_archived, FALSE) = FALSE
+      RETURNING *
+      `,
+      [
+        newTicketNumber.trim(),
+        custName.trim(),
+        issueSummary.trim(),
+        deviceDescription ? deviceDescription.trim() : null,
+        deviceType ? deviceType.trim() : null,
+        priorityLevel || 'Normal',
+        ticketNumber
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    res.json({
+      message: 'Ticket details updated successfully',
+      ticket: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Update ticket details error:', err);
+
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'That ticket number already exists.' });
+    }
+
+    res.status(500).json({ error: 'Failed to update ticket details' });
+  }
+}
+
 async function deleteTicket(req, res) {
   const { ticketId } = req.params;
 
@@ -392,5 +477,6 @@ module.exports = {
   getBoardData,
   moveTicket,
   getTicketHistory,
+  updateTicketDetails,
   deleteTicket
 };
