@@ -36,6 +36,19 @@
   opacity: 0.95;
 }
 
+.ticketCard.status-waiting-customer{
+  border-left: 4px red;
+  opacity: 0.95;
+}
+
+.ticketCard.ticketCard.status-waiting-part{
+  border-left: 4px solid yellow;
+  opacity: 0.95;
+}
+
+
+
+
 .ticketTopRow {
   display: flex;
   justify-content: space-between;

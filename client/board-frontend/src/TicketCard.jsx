@@ -9,9 +9,13 @@ function TicketCard({ ticket, type, onStatusChange, onDeleteTicket }) {
   const showPickedUpButton =
     type === "resolved" || ticket.current_status === "Done";
 
+  const statusClass = {
+  "Waiting for Customer Response": "status-waiting-customer",
+  "Waiting for Part": "status-waiting-part",
+    }[ticket.sub_status] || "";
   return (
     <div
-      className={`ticketCard ${type}`}
+      className={`ticketCard ${type} ${statusClass}`}
       draggable
       onDragStart={handleDragStart}
     >

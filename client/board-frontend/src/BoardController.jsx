@@ -54,6 +54,13 @@ export function useBoardState() {
           newBucket.push(ticket);
         }
       });
+      Object.keys(techBuckets).forEach((techName) => {
+        techBuckets[techName].actively.sort((a, b) => {
+          const aWaiting = a.sub_status === "Waiting for Part" ? 1 : 0;
+          const bWaiting = b.sub_status === "Waiting for Part" ? 1 : 0;
+          return aWaiting - bWaiting;
+        });
+      });
 
       setTechnicians(fetchedTechnicians);
       setTicketData(techBuckets);
