@@ -41,7 +41,7 @@
   opacity: 0.95;
 }
 
-.ticketCard.ticketCard.status-waiting-part{
+.ticketCard.status-waiting-part{
   border-left: 4px solid yellow;
   opacity: 0.95;
 }
