@@ -2,6 +2,36 @@ import { useEffect, useRef, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+const getTicketStatusRank = (ticket) => {
+  const subStatus = (ticket.sub_status || "").toLowerCase();
+
+  if (subStatus.includes("customer")) return 1; // yellow
+  if (subStatus.includes("part")) return 2;     // red
+
+  return 0; // green / active / no sub status
+};
+
+const sortTicketsByStatusColor = (tickets) => {
+  return [...tickets].sort((a, b) => {
+    const rankDiff = getTicketStatusRank(a) - getTicketStatusRank(b);
+    if (rankDiff !== 0) return rankDiff;
+
+    return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+  });
+};
+
+const sortAllTechBuckets = (techBuckets) => {
+  const sorted = structuredClone(techBuckets);
+
+  Object.keys(sorted).forEach((techName) => {
+    sorted[techName].actively = sortTicketsByStatusColor(
+      sorted[techName].actively || []
+    );
+  });
+
+  return sorted;
+};
+
 const persistMove = async (ticketId, payload) => {
   const response = await fetch(`${API_BASE}/tickets/${ticketId}/move`, {
     method: "PATCH",
@@ -54,16 +84,10 @@ export function useBoardState() {
           newBucket.push(ticket);
         }
       });
-      Object.keys(techBuckets).forEach((techName) => {
-        techBuckets[techName].actively.sort((a, b) => {
-          const aWaiting = a.sub_status === "Waiting for Part" ? 1 : 0;
-          const bWaiting = b.sub_status === "Waiting for Part" ? 1 : 0;
-          return aWaiting - bWaiting;
-        });
-      });
+      const sortedTechBuckets = sortAllTechBuckets(techBuckets);
 
       setTechnicians(fetchedTechnicians);
-      setTicketData(techBuckets);
+      setTicketData(sortedTechBuckets);
       setNewTickets(newBucket);
       setResolvedTickets(resolvedBucket);
     } catch (err) {
@@ -124,7 +148,7 @@ export function useBoardState() {
     if (!newData[tech.name]) newData[tech.name] = emptyTech();
     newData[tech.name].actively.push(movedTicket);
 
-    setTicketData(newData);
+    setTicketData(sortAllTechBuckets(newData));
     setNewTickets(newNew);
     setResolvedTickets(newResolved);
 
@@ -208,7 +232,7 @@ export function useBoardState() {
         newData[updatedTicket.technician_name] = emptyTech();
       }
       newData[updatedTicket.technician_name].actively.push(updatedTicket);
-      setTicketData(newData);
+      setTicketData(sortAllTechBuckets(newData));
       setNewTickets(newNew);
     }
 

@@ -35,8 +35,7 @@ function TicketCard({ ticket, type, onStatusChange, onDeleteTicket }) {
 
       <div className="ticketMeta">
         <span className="ticketDevice">
-          {ticket.device_type || "Unknown Device"}
-        </span>
+          {ticket.device_description || ticket.device_type || "Unknown Device"}        </span>
       </div>
 
       <div className="ticketIssue">{ticket.issue_summary}</div>

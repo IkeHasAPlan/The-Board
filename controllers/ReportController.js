@@ -32,15 +32,6 @@ async function getReportSummary(req, res) {
       FROM tickets;
     `);
 
-    const commonJobResult = await pool.query(`
-      SELECT issue_summary, COUNT(*) AS total
-      FROM tickets
-      WHERE issue_summary IS NOT NULL
-        AND TRIM(issue_summary) <> ''
-      GROUP BY issue_summary
-      ORDER BY total DESC, issue_summary ASC
-      LIMIT 1;
-    `);
 
     const row = result.rows[0];
 
@@ -48,7 +39,6 @@ async function getReportSummary(req, res) {
       jobsCompletedThisWeek: formatNumber(row.jobs_completed_this_week),
       avgCompletionDays: row.avg_completion_days === null ? null : Number(row.avg_completion_days),
       openJobs: formatNumber(row.open_jobs),
-      mostCommonJobType: commonJobResult.rows[0]?.issue_summary || 'N/A'
     });
   } catch (err) {
     console.error('Get report summary error:', err);
@@ -82,18 +72,8 @@ async function getTechnicianPerformance(req, res) {
         COUNT(t.ticket_id) FILTER (
           WHERE t.current_status <> 'Done'
             AND COALESCE(t.is_archived, FALSE) = FALSE
-        ) AS active_tickets,
+        ) AS active_tickets
 
-        (
-          SELECT t2.issue_summary
-          FROM tickets t2
-          WHERE t2.assigned_technician_id = tech.technician_id
-            AND t2.issue_summary IS NOT NULL
-            AND TRIM(t2.issue_summary) <> ''
-          GROUP BY t2.issue_summary
-          ORDER BY COUNT(*) DESC, t2.issue_summary ASC
-          LIMIT 1
-        ) AS common_job
 
       FROM technicians tech
       LEFT JOIN tickets t

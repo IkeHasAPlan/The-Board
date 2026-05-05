@@ -146,17 +146,7 @@
         box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
       }
 
-      .search-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        border: 1px solid var(--border-2);
-        background: var(--panel-2);
-        display: grid;
-        place-items: center;
-        flex: 0 0 44px;
-      }
-
+      
       .ticket-list {
         display: flex;
         flex-direction: column;
@@ -441,12 +431,6 @@ textarea.edit-field {
         <aside class="sidebar">
           <div class="search-row">
             <input id="searchInput" class="search-input" type="text" placeholder="Search by customer, ticket, or issue..." />
-            <div class="search-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="11" cy="11" r="7" stroke="#cbd5e1" stroke-width="2"></circle>
-                <path d="M20 20L17 17" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"></path>
-              </svg>
-            </div>
           </div>
 
           <div id="ticketList" class="ticket-list"></div>
@@ -494,8 +478,9 @@ textarea.edit-field {
 
 div.innerHTML = `
   <div class="name">${ticket.cust_name} #${ticket.ticket_number}</div>
-  <div class="type">${ticket.device_type || 'Unknown'}</div>
-  <div class="issue">${ticket.issue_summary}</div>
+  <div class="type">${ticket.device_description || ticket.device_type || 'Unknown'}
+    
+  </div>  <div class="issue">${ticket.issue_summary}</div>
   <div class="created-date">${createdDate}</div>
 `;
 
@@ -659,15 +644,12 @@ function renderTicketDetail(ticket, message = '') {
         }
       </div>
 
-      <div class="detail-card">
-        <div class="detail-label">Sub Status</div>
-        ${ticket.sub_status ? `
+      ${['Waiting for Parts', 'Waiting for Customer Response'].includes(ticket.sub_status) ? `
   <div class="detail-card">
     <div class="detail-label">Sub Status</div>
     <div class="detail-value">${ticket.sub_status}</div>
   </div>
 ` : ''}
-      </div>
 
       <div class="detail-card full">
         <div class="detail-label">Issue</div>
@@ -729,7 +711,17 @@ async function saveTicketEdits() {
   }
 }
 
-      searchTickets();
+let searchTimer = null;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+
+  searchTimer = setTimeout(() => {
+    searchTickets(searchInput.value.trim());
+  }, 200);
+});
+
+searchTickets();
     </script>
   </body>
 </html>

@@ -53,7 +53,7 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* 🔥 FIXED METRICS LAYOUT */
+/*  FIXED METRICS LAYOUT */
 .metrics-section {
   margin-bottom: 25px;
 }
@@ -67,7 +67,7 @@ h1 {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 15px;
 }
 
@@ -75,7 +75,8 @@ h1 {
   background: #111827;
   border: 1px solid #243047;
   border-radius: 14px;
-  padding: 18px;
+  padding: 22px;
+  font-size: 14px;
   text-align: center;
 }
 
@@ -143,7 +144,7 @@ tr:hover {
     <div class="subtitle">Shop & Technician Metrics</div>
   </div>
 
-  <!-- 🔥 METRICS SECTION -->
+  <!-- metrics -->
   <div class="metrics-section">
 
     <div class="metrics-label">
@@ -166,15 +167,10 @@ tr:hover {
         <div class="stat-value" id="openJobs">--</div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-label">Common Job</div>
-        <div class="stat-value" id="commonJob">--</div>
-      </div>
-    </div>
+      
 
   </div>
 
-  <!-- 🔥 TABLE SECTION -->
   <div class="table-section">
     <div class="table-title">Technician Performance</div>
 
@@ -185,12 +181,11 @@ tr:hover {
           <th>Jobs Completed</th>
           <th>Avg Time</th>
           <th>Active Tickets</th>
-          <th>Common Job</th>
         </tr>
       </thead>
 
       <tbody id="reportTable">
-        <tr><td colspan="5">Loading...</td></tr>
+        <tr><td colspan="4">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -217,7 +212,6 @@ async function loadSummary() {
   document.getElementById("avgTime").textContent =
     data.avgCompletionDays ? `${data.avgCompletionDays} days` : '--';
   document.getElementById("openJobs").textContent = data.openJobs ?? '--';
-  document.getElementById("commonJob").textContent = data.mostCommonJobType ?? '--';
 }
 
 async function loadTechnicians() {
@@ -232,7 +226,6 @@ async function loadTechnicians() {
       <td>${row.jobs_completed ?? 0}</td>
       <td>${row.avg_time ? `${row.avg_time} days` : '—'}</td>
       <td>${row.active_tickets ?? 0}</td>
-      <td>${row.common_job || '--'}</td>
     </tr>
   `).join("");
 }

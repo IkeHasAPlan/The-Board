@@ -171,6 +171,7 @@ async function getBoardData(req, res) {
         t.cust_name,
         t.sub_status,
         t.issue_summary,
+        t.device_description,
         t.device_type,
         t.priority_level,
         t.current_status,
