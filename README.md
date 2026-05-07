@@ -6,7 +6,7 @@
 
 ## Overview
 
-**The Board** is a full-stack repair ticket management platform developed for Columbia Computer Center as a capstone project by Isaac Rivera.
+**The Board** is a full-stack repair ticket management platform developed for Columbia Computer Center as a capstone project by Isaac Rivera, Ashton Wooster, Bryson Allen, Michael Forness, and Gideon Masters.
 
 Originally created to replace a paper-based workflow, The Board streamlines technician coordination, ticket tracking, event logging, repair status management, and administrative reporting through an intuitive touchscreen interface designed specifically for computer repair environments.
 
